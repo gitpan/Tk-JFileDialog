@@ -1,0 +1,7 @@
+MANIFEST
+README
+Makefile.PL
+JFileDialogTest.pl
+test.pl
+Tk::JFileDialog.3
+Tk/JFileDialog.pm
