@@ -3,7 +3,7 @@ README
 Makefile.PL
 JFileDialogTest.pl
 test.pl
-Tk::JFileDialog.3
+JFileDialog.3
 JFileDialog.htm
 test.pl
 Tk/JFileDialog.pm

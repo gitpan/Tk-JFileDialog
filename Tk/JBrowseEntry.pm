@@ -170,7 +170,7 @@ position the label above the widget, use "-labelPack => [-side => 'top']".
 package Tk::JBrowseEntry;
 
 use vars qw($VERSION);
-$VERSION = '4.52';
+$VERSION = '4.61';
 
 use Tk;
 use Carp;
@@ -279,6 +279,7 @@ sub Populate
 	$w->{-listrelief} = delete($args->{-listrelief})  if (defined($args->{-listrelief}));
 	$w->{-listfont} = delete($args->{-listfont})  if (defined($args->{-listfont}));
 	$w->{-noselecttext} = delete($args->{-noselecttext})  if (defined($args->{-noselecttext}));
+	$w->{-browse} = 0;
 	$w->{-browse} = delete($args->{-browse})  if (defined($args->{-browse}));
 	$w->{-tabcomplete} = 0;
 	$w->{-tabcomplete} = delete($args->{-tabcomplete})  if (defined($args->{-tabcomplete}));
@@ -305,6 +306,7 @@ sub Populate
 			-relief => ($w->{-relief} || 'sunken'));
 	my $e = $tf->LabEntry(-borderwidth => 0, -relief => 'flat');
 	# FOR SOME REASON, E HAS TO BE A LABENTRY, JUST PLAIN ENTRY WOULDN'T TAKE KEYBOARD EVENTS????
+ $w->ConfigSpecs(DEFAULT => [$e]);
 	my $b = $tf->Button(-borderwidth => 1, -takefocus => $w->{btntakesfocus}, 
 			#-bitmap => '@' . Tk->findINC("balArrow.xbm"));
 			-bitmap => $BITMAP);
@@ -463,6 +465,8 @@ sub SetBindings
 		if ($altbinding =~ /Return\=Next/i)
 		{
 			$w->Popdown  if  ($w->{"popped"});   #UNDISPLAYS LISTBOX.
+			$w->Callback(-browsecmd => $w, $w->Subwidget('entry')->get, 'entry.return')
+					if ($w->{-browse} == 1);
 			eval { shift->focusNext->focus; };
 			Tk->break;
 		}
@@ -830,6 +834,7 @@ sub SetBindings
 	{
 		$w->ButtonHack;
 		LbChoose($w, $l->XEvent->x, $l->XEvent->y);
+		Tk->break;     #ADDED 20050210.
 	}
 	);
 	$l->bind('<Escape>' => sub
@@ -1306,10 +1311,10 @@ sub choices
 	else           #POPULATE DROPDOWN LIST WITH THESE CHOICES.
 	{
 		my $choices = shift;
-		if( $choices )
+		if ($choices)
 		{
 			$w->delete( qw/0 end/ );
-#			$w->Subwidget("slistbox")->insert( "end", @$choices );
+			$w->{hashref} = {}  if (defined $w->{hashref});   #ADDED 20050125.
 			$w->insert($choices);
 		}
 
@@ -1352,7 +1357,24 @@ sub insert
 	my $res;
 	if (ref($item))
 	{
-		$res = $w->Subwidget("slistbox")->insert($pos, @$item);
+		if (ref($item)  eq 'HASH')
+		{
+			my @choiceKeys = ();
+			@choiceKeys = sort { $item->{$a} cmp $item->{$b} } keys(%$item);
+			my @choiceVals = sort values(%$item);
+			$w->Subwidget('slistbox')->insert($pos, @choiceVals);
+			my $choiceReverseHashRef = (defined $w->{hashref}) ? $w->{hashref}
+					: {};    #ADDED 20050125.
+			for (my $i=0;$i<=$#choiceKeys;$i++)   #ADDED 20050125.
+			{
+				$choiceReverseHashRef->{$choiceVals[$i]} = $choiceKeys[$i];
+			}
+			$w->{hashref} = $choiceReverseHashRef;
+		}
+		else
+		{
+			$res = $w->Subwidget("slistbox")->insert($pos, @$item);
+		}
 	}
 	else
 	{
@@ -1382,6 +1404,13 @@ sub delete
 {
 	my $w = shift;
 	my $res = $w->Subwidget("slistbox")->delete(@_);
+	if (defined $w->{hashref})   #ADDED 20050125.
+	{
+		foreach my $i (@_)
+		{
+			delete $w->{hashref}->{$i}  if (defined $w->{hashref}->{$i});
+		}
+	}
 	unless ($w->Subwidget("slistbox")->size > 0)
 	{
 		my $button = $w->Subwidget( "arrow" );
@@ -1540,6 +1569,39 @@ sub _max
 		$max = $val if $max < $val;
 	}
 	return( $max );
+}
+
+sub dereference   #USER-CALLABLE FUNCTION, ADDED 20050125.
+{
+	my $w = shift;
+	return undef  unless (defined $_[0]);
+	my $userValue = shift;
+	return (defined($w->{hashref}) && defined($w->{hashref}->{$userValue}))
+			? $w->{hashref}->{$userValue} : $userValue;
+}
+
+sub dereferenceOnly   #USER-CALLABLE FUNCTION, ADDED 20050125.
+{
+	my $w = shift;
+	return undef  unless (defined $_[0]);
+	my $userValue = shift;
+	return (defined($w->{hashref}) && defined($w->{hashref}->{$userValue}))
+			? $w->{hashref}->{$userValue} : undef;
+}
+
+sub hasreference   #USER-CALLABLE FUNCTION, ADDED 20050125.
+{
+	my $w = shift;
+	return undef  unless (defined $_[0]);
+	my $userValue = shift;
+	return (defined($w->{hashref}) && defined($w->{hashref}->{$userValue}))
+			? 1 : undef;
+}
+
+sub fetchhash
+{
+	my $w = shift;
+	return (defined $w->{hashref}) ? $w->{hashref} : undef;
 }
 
 1;

@@ -1,7 +1,7 @@
 ##################################################
 ##################################################
 ##                                              ##
-##   JFileDialog v. 1.10 - a reusable Tk-widget ##
+##   JFileDialog v. 1.20 - a reusable Tk-widget ##
 ##      (c) 1996-2005 by Jim Turner             ##
 ##      --Derived 12/11/96 by Jim W. Turner--   ##
 ##      --from FileDialog                       ##
@@ -299,7 +299,7 @@ This code may be distributed under the same conditions as Perl itself.
 package Tk::JFileDialog;
 
 use vars qw($VERSION);
-$VERSION = '1.10';
+$VERSION = '1.20';
 
 require 5.002;
 use Tk;
@@ -313,8 +313,6 @@ my $useAutoScroll = 0;
 eval 'use Tk::Autoscroll; $useAutoScroll = 1; 1';
 
 my $Win32 = 0;
-#eval 'use Win32; use Tk::JOptionmenu; $Win32 = 1; 1';
-#$Win32 = 0  unless ($^O =~ /Win/i);
 $Win32 = ($^O =~ /Win/i) ? 1 : 0;
 
 my $driveletter = '';
@@ -333,13 +331,15 @@ my(@bothFill) = (-fill => 'both');
 my(@expand) = (-expand => 1);
 my(@raised) = (-relief => 'raised');
 my(@sunken) = (-relief => 'sunken');
+my (@driveletters);
+my ($cwdDfltDrive);
 
 
 sub Populate
 {
 	## File Dialog constructor, inherits new from Toplevel
 	my($FDialog, @args) = @_;
-	
+
 	$FDialog->SUPER::Populate(@args);
 	foreach my $i (keys %{$args[0]})
 	{
@@ -357,7 +357,12 @@ sub Populate
 	
 	$FDialog->withdraw;
 	
-	unless ($^O =~ /Win/i)
+	if ($^O =~ /Win/i)
+	{
+		$cwdDfltDrive = substr(&cwd(),0,2);
+		$cwdDfltDrive ||= substr(&getcwd(),0,2);
+	}
+	else
 	{
 		$FDialog->protocol('WM_DELETE_WINDOW' => sub
 		{
@@ -677,6 +682,8 @@ sub BuildListBox
 	$self->{"$listvar"}->Subwidget('xscrollbar')->configure(-takefocus => 0);
 	$self->{"$listvar"}->Subwidget('yscrollbar')->configure(-takefocus => 0);
 	Tk::Autoscroll::Init($self->{"$listvar"})  if ($useAutoScroll);
+	$self->{"$listvar"}->bind('<Enter>', sub { $self->bind('<MouseWheel>', [ sub { $self->{"$listvar"}->yview('scroll',-($_[1]/120)*1,'units') }, Tk::Ev("D")]); });
+	$self->{"$listvar"}->bind('<Leave>', sub { $self->bind('<MouseWheel>', [ sub { Tk->break; }]) });
 }
 
 sub BindDir
@@ -699,6 +706,11 @@ sub BindDir
 			s!(.*/)[^/]*$!$1!;
 			$self->{Configure}{-Path} = $_;
 		}
+		elsif ($np eq "/")
+		{
+			## Moving to root directory
+			$self->{Configure}{-Path} = $np;
+		}
 		else
 		{
 			## Going down into a directory
@@ -720,6 +732,11 @@ sub BindDir
 			chop if m!/$!;
 			s!(.*/)[^/]*$!$1!;
 			$self->{Configure}{-Path} = $_;
+		}
+		elsif ($np eq "/")
+		{
+			## Moving to root directory
+			$self->{Configure}{-Path} = $np;
 		}
 		else
 		{
@@ -807,9 +824,9 @@ sub BuildEntry
 	## Now create and pack the title and entry
 	$eFrame->{'Label'} = $eFrame->Label->pack(@leftPack); # !!!
 
-	$self->{"$entry"} = $eFrame->Entry(@sunken,
-				-textvariable => \$self->{Configure}{$LabelVar})
-			->pack(@rightPack, @expand, @xfill);
+#	$self->{"$entry"} = $eFrame->Entry(@sunken,
+#				-textvariable => \$self->{Configure}{$LabelVar})
+#			->pack(@rightPack, @expand, @xfill);
 	
 	if ($LabelType eq 'Path')   #NEXT 26 ADDED 20010130 TO ADD DRIVE-LETTER SELECTION IN WINDOZE!
 	{
@@ -817,28 +834,46 @@ sub BuildEntry
 		{
 			$_ = Win32::GetNextAvailDrive();
 			s/\W//g;
-			my (@driveletters);
-			for my $i ('A'..'Z')
+			#my (@driveletters);
+#			@driveletters = ();
+			unless ($#driveletters >= 0)
 			{
-				last  if ($i eq $_);
-				push (@driveletters, "~$i:");
+				for my $i ('A'..'Z')
+				{
+					last  if ($i eq $_);
+#					push (@driveletters, "~$i:");
+					push (@driveletters, "$i:");
+				}
 			}
 			$driveletter ||= 'C:';
-			my $driveMenu = $eFrame->JOptionmenu(
+#			$self->{"driveMenu"} = $eFrame->JOptionmenu(
+#					-textvariable => \$driveletter,
+#					-command => [\&chgDriveLetter, $self],
+#					#-relief => 'raised',
+#					#-highlightthickness => 2,
+#					-indicatoron => 0,
+#					-takefocus => 1,
+#					-options => \@driveletters)
+#				->pack(@rightPack);
+			$self->{"driveMenu"} = $eFrame->JBrowseEntry(
 					-textvariable => \$driveletter,
-					-command => [\&chgDriveLetter, $self],
-					#-relief => 'raised',
+					-state => 'normal',
+					-browsecmd => [\&chgDriveLetter, $self],
 					#-highlightthickness => 2,
-					-indicatoron => 0,
+					#-altbinding => 'Down=Popup,Return=Next',
 					-takefocus => 1,
-					-options => \@driveletters)
-				->pack(@rightPack);
+					-browse => 1,
+					-choices => \@driveletters)
+				->pack(@leftPack);
 		}
 		else
 		{
 			$driveletter = '';
 		}
 	}
+	$self->{"$entry"} = $eFrame->Entry(@sunken,
+				-textvariable => \$self->{Configure}{$LabelVar})
+			->pack(@leftPack, @expand, @xfill);
 	if ($LabelType eq 'File' && $self->{Configure}{-SelDir} != 1)
 	{
 		$self->{"$entry"}->bind("<Return>",sub
@@ -874,7 +909,7 @@ sub BuildEntry
 			$currentval =~ s|(.*\/)(.*)$|$1|;
 			$_ = $self->{$whichlist}->get('active');
 			my ($restofsel) = $currentval;
-			if ($_ && $_ ne '.' && $_ ne '..')   #IF ADDED 20010131.
+			if ($_ && $_ ne '.' && $_ ne '..' && $_ ne '/')   #IF ADDED 20010131.
 			{
 				$restofsel .= $self->{$whichlist}->get('active');
 			}
@@ -1040,6 +1075,33 @@ sub BuildFDWindow
 	}
 	)
 			->pack(-padx => '2m', -pady => '2m', @leftPack, @expand, @xfill);
+	
+	$self->{'Home'} = $butFrame->Button(
+		-text => 'Home', 
+		-underline => 0,
+		-command => sub
+		{
+			$self->{Configure}{-Path} = $ENV{HOME} || $ENV{LOGDIR};
+			$self->{Configure}{-Path} =~ s#\\#\/#g;
+			$self->{Configure}{-Path} = (getpwuid($<))[7]
+					unless ($Win32 || !$< || $self->{Configure}{-Path});
+			$self->{Configure}{-Path} ||= &cwd() || &getcwd();
+			\&RescanFiles($self);
+		}
+	)
+			->pack(-padx => '2m', -pady => '2m', @leftPack, @expand, @xfill);
+	
+	$self->{'Current'} = $butFrame->Button(
+		-text => 'CWD',
+		-underline => 1,
+		-command => sub
+		{
+			$self->{Configure}{-Path} = &cwd() || &getcwd();
+			$self->{Configure}{-Path} =~ s#\\#\/#g;
+			\&RescanFiles($self);
+		}
+	)
+			->pack(-padx => '2m', -pady => '2m', @leftPack, @expand, @xfill);
 }
 
 sub RescanFiles
@@ -1052,33 +1114,16 @@ sub RescanFiles
 	my($path) = $self->{Configure}{-Path};
 	my($show) = $self->{Configure}{-ShowAll};
 	my($chdir) = $self->{Configure}{-Chdir};
-	
 	### Remove a final / if it is there, and add it
 	$path = '' unless (defined($path));
-	#if ($^O =~ /Win/i)
-	#{
-	#	if ($path le '.')
-	#	{
-	#		$path = `cd`;
-	#		$path =~ s!\\!/!g;
-	#		chomp($path);
-	#		$path = 'C:'  if ($path eq '.');
-	#	}
-	#}
-	#else
-	#{
-		if ($path !~ /\S/)
-		{
-			$_ = &cwd();
-			if ($driveletter)
-			{
-				$path = (/^$driveletter/) ? '.' : '/';
-			}
-			$self->{Configure}{-Path} = $path  if ($path eq '/');
-		}
-		$path =~ s/^\./&cwd()/e;
-		$driveletter = $1  if ($path =~ s/^(\w\:)(.*)$/$2/);
-	#}
+	$_ = &cwd() || &getcwd();
+	if ($path !~ /\S/)
+	{
+		$self->{Configure}{-Path} = $path  if ($path eq '/');
+	}
+	$path =~ s/^\./$_/;
+	$driveletter = $1  if ($path =~ s/^(\w\:)(.*)$/$2/);
+	$driveletter =~ tr/a-z/A-Z/;
 	$path =~ s!(.*/)[^/]*/\.\./?$!$1! 
 			&& $self->{Configure}{-Path} =~ s!(.*/)[^/]*/\.\./?$!$1!;
 	if ($^O =~ /Win/i)
@@ -1086,10 +1131,10 @@ sub RescanFiles
 		if (length($path) && substr($path,-1,1) ne '/')
 		{
 			$path .= '/';
-			$self->{Configure}{-Path} = $path;
 		}
+		$self->{Configure}{-Path} = $path;
 		$path = $driveletter . $path  if ($driveletter);
-		$path =~ s!^/([a-zA-Z]\:)!$1!
+		#$path =~ s!^/([a-zA-Z]\:)!$1!;
 	}
 	else
 	{
@@ -1123,7 +1168,6 @@ sub RescanFiles
 		@allfiles = readdir(ALLFILES);
 		closedir(ALLFILES);
 	}
-	
 	my($direntry);
 	
 	## First, get the directories...
@@ -1131,6 +1175,7 @@ sub RescanFiles
 	{
 		my ($parentfound) = 0;
 		$dl->delete(0,'end');
+		$dl->insert('end', '/')  unless ($path eq '/');
 		foreach $direntry (sort @allfiles)
 		{
 			next if !-d "$path$direntry";
@@ -1145,9 +1190,9 @@ sub RescanFiles
 			$dl->insert('end',$direntry);
 			$parentfound = 1  if ($direntry =~ /^\.\./);
 		}
-		$dl->insert(0,'..')   #ADDED 20010130 JWT TO FIX MISSING ".." CHOICE!
+		$dl->insert(1,'..')   #ADDED 20010130 JWT TO FIX MISSING ".." CHOICE!
 				unless ($parentfound || $path eq '/' || ($path =~ m#^\w\:\/?$#));
-		$dl->insert(0,'.')  if ($path eq '/' || ($path =~ m#^\w\:\/?$#));
+		$dl->insert(1,'.')  if ($path eq '/' || ($path =~ m#^\w\:\/?$#));
 	}
 	
 	## Now, get the files
@@ -1162,58 +1207,44 @@ sub RescanFiles
 	
 	@allfiles = <$path.$pat> if $show;
 	
-	if ($^O =~ /Win/i)
+	my ($cmd) = $path . $pat;
+	if (opendir(DIR, $path))
 	{
-		my ($cmd) = $path . $pat;
-		$cmd =~ s#/#\\#g;
-		my ($dirpath) = $cmd;
-		mkdir '/temp'  unless (-d '/temp');
-		$cmd = 'dir /B ' . $dirpath . ' >\\temp\\dir.tmp';
-		system($cmd);
-		if ($show)
-		{
-			$cmd = 'dir /B /AH ' . $dirpath . ' >>\\temp\\dir.tmp';
-			system($cmd);
-			$cmd =~ s! \/AH ! \/AS !;
-			system($cmd);
-		}
-		
-		if (open(TEMP,'</temp/dir.tmp'))
-		{
-			while (<TEMP>)
-			{
-				chomp;
-				next  if (!$show && /^\./);  #SKIP ".-FILES" EVEN ON WINDOWS!
-				next  if (/^Shortcut /);
-				push (@allfiles,$_);
-			}
-			close TEMP;
-		}
-		foreach $direntry (sort @allfiles)
-		{
-			if (-f "$path$direntry")
-			{
-				$direntry =~ s!.*/([^/]*)$!$1!;
-				$fl->insert('end',$direntry);
-			}
-		}
+		@allfiles = grep { /\.${pat}$/i } readdir(DIR);
+		closedir DIR;
 	}
-	else
+	foreach $direntry (sort @allfiles)
 	{
-		#@allfiles = `ls $path$pat`;
-		@allfiles = (@allfiles, <$path$pat>);
-		foreach $direntry (sort @allfiles)
+		if (-f "${path}$direntry")
 		{
-			if (-f $direntry)
-			{
-				$direntry =~ s!.*/([^/]*)$!$1!;
-				$fl->insert('end',$direntry);
-			}
+			$direntry =~ s!.*/([^/]*)$!$1!;
+			next  if (!$show && $direntry =~ /^\./);  #SKIP ".-FILES" EVEN ON WINDOWS!
+			$fl->insert('end',$direntry);
 		}
 	}
 	
 	$self->configure(-cursor => 'top_left_arrow');
 	
+	if ($^O =~ /Win/i)
+	{
+		my $foundit = 0;
+		for (my $i=0;$i<=$#driveletters;$i++)
+		{
+			if ($driveletters[$i] eq $driveletter)
+			{
+				$foundit = 1;
+				last;
+			}
+		}
+		unless ($foundit)
+		{
+			my @l = @driveletters;
+			push (@l, $driveletter);
+			@driveletters = sort @l;
+			$self->{"driveMenu"}->choices(\@driveletters);
+		}
+		
+	}
 	$self->{'Rescan'}->grab('release') if $self->grab('current') == $self->{'Rescan'};
 	$OldGrab->grab if defined($OldGrab);
 	$self->{'Rescan'}->configure(-state => 'normal');
@@ -1507,7 +1538,11 @@ sub chgDriveLetter   #ADDED 20010130 BY JWT.
 	#$_ = $self->{Configure}{-Path};
 	#s!^\w\:!$driveletter!  if ($driveletter =~ /\w\:/);
 	#$self->{Configure}{-Path} = $driveletter  if ($driveletter =~ /\w\:/);
-	$self->{Configure}{-Path} = '';
+	$driveletter =~ tr/a-z/A-Z/;
+	$driveletter = substr($driveletter,0,1) . ':'  if (length($driveletter) >= 2 || $driveletter =~ /^[A-Z]$/);
+	$self->{Configure}{-Path} = ''  if ($_[2] =~ /(?:listbox|key\.\w)/);
+	$self->{Configure}{-Path} = &cwd() || &getcwd()
+			if (!$self->{Configure}{-Path} && $driveletter =~ /$cwdDfltDrive/i);
 	&RescanFiles($self);
 }
 
@@ -1515,24 +1550,3 @@ sub chgDriveLetter   #ADDED 20010130 BY JWT.
 1;
 ### End of file FileDialog.pm ###
 __END__
-From  powers@swaps.ml.com  Fri Mar  1 07:49:17 1996 
-Return-Path: <powers@swaps.ml.com> 
-From: powers@swaps.ml.com (Brent B. Powers Swaps Programmer X2293)
-Date: Fri, 1 Mar 1996 02:48:31 -0500 
-Message-Id: <199603010748.CAA16488@swapsdvlp02.ny-swaps-develop.ml.com> 
-To: nik@tiuk.ti.com 
-Cc: ringger@cs.rochester.edu, powers@ml.com 
-Subject: New FileDialog widget 
-P-From: "Brent B. Powers Swaps Programmer x2293" <powers@swaps.ml.com> 
-
-This one's a new and improved version of FileDialog.pm.  My bus error
-problem was finally solved via perl5.002gamma, so all now should work
-properly.   Could you please let me know that you did get
-this... We're having some trouble with mail gateways.
-
-Cheers.
-
-
-
-
-Brent B. Powers             Merrill Lynch          powers@swaps.ml.com
