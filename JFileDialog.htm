@@ -1,0 +1,348 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Tk::JFileDialog - A highly configurable File Dialog widget for Perl/Tk.</title>
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<ul>
+
+		<li><a href="#usage_description">Usage Description</a></li>
+		<li><a href="#example_code">Example Code</a></li>
+	</ul>
+
+	<li><a href="#methods">METHODS</a></li>
+	<ul>
+
+		<li><a href="#show">Show</a></li>
+	</ul>
+
+	<li><a href="#configuration">CONFIGURATION</a></li>
+	<ul>
+
+		<li><a href="#flags"><em>Flags</em></a></li>
+		<li><a href="#chdir">-Chdir</a></li>
+		<li><a href="#create">-Create</a></li>
+		<li><a href="#showall">-ShowAll</a></li>
+		<li><a href="#disableshowall">-DisableShowAll</a></li>
+		<li><a href="#disablefpat">-DisableFPat</a></li>
+		<li><a href="#grab">-Grab</a></li>
+		<li><a href="#history">-History</a></li>
+		<li><a href="#histfile">-HistFile</a></li>
+		<li><a href="#horiz">-Horiz</a></li>
+		<li><a href="#quickselect">-QuickSelect</a></li>
+		<li><a href="#seldir">-SelDir</a></li>
+		<li><a href="#special"><em>Special</em></a></li>
+		<li><a href="#fpat">-FPat</a></li>
+		<li><a href="#geometry">-Geometry</a></li>
+		<li><a href="#selhook">-SelHook</a></li>
+		<li><a href="#strings"><em>Strings</em></a></li>
+		<li><a href="#labels_and_captions"><em>Labels and Captions</em></a></li>
+		<li><a href="#button_text"><em>Button Text</em></a></li>
+		<li><a href="#error_dialog_switches"><em>Error Dialog Switches</em></a></li>
+		<li><a href="#edlgtitle">-EDlgTitle</a></li>
+		<li><a href="#edlgtext">-EDlgText</a></li>
+	</ul>
+
+	<li><a href="#author">Author</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>Tk::JFileDialog - A highly configurable File Dialog widget for Perl/Tk.</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The widget is composed of a number
+of sub-widgets, namely, a listbox for files and (optionally) directories, an entry
+for filename, an (optional) entry for pathname, an entry for a filter pattern, a 'ShowAll'
+checkbox (for enabling display of .* files and directories), and three buttons, namely
+OK, Rescan, and Cancel.  Note that the labels for all subwidgets (including the text
+for the buttons and Checkbox) are configurable for foreign language support.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ my $LoadDialog = $main-&gt;JFileDialog(
+        -Title =&gt;'Please select a file:',
+        -Create =&gt; 0
+ );</pre>
+<p>
+</p>
+<h2><a name="usage_description">Usage Description</a></h2>
+<p>To use FileDialog, simply create your FileDialog objects during initialization (or at
+least before a Show).  When you wish to display the FileDialog, invoke the 'Show' method
+on the FileDialog object;  The method will return either a file name, a path name, or
+undef.  undef is returned only if the user pressed the Cancel button.</p>
+<p>
+</p>
+<h2><a name="example_code">Example Code</a></h2>
+<p>The following code creates a FileDialog and calls it.  Note that perl5.002gamma is
+required.</p>
+<dl>
+<dt></dt>
+<dd>
+<pre>
+ #!/usr/local/bin/perl -w</pre>
+</dd>
+<dd>
+<pre>
+ use Tk;
+ use Tk::JFileDialog;
+ use strict;</pre>
+</dd>
+<dd>
+<pre>
+ my($main) = MainWindow-&gt;new;
+ my($Horiz) = 1;
+ my($fname);</pre>
+</dd>
+<dd>
+<pre>
+ my($LoadDialog) = $main-&gt;JFileDialog(-Title =&gt;'This is my title',
+                                    -Create =&gt; 0);</pre>
+</dd>
+<dd>
+<pre>
+ $LoadDialog-&gt;configure(-FPat =&gt; '*pl',
+                       -ShowAll =&gt; 'NO');</pre>
+</dd>
+<dd>
+<pre>
+ $main-&gt;Entry(-textvariable =&gt; \$fname)
+        -&gt;pack(-expand =&gt; 1,
+               -fill =&gt; 'x');</pre>
+</dd>
+<dd>
+<pre>
+ $main-&gt;Button(-text =&gt; 'Kick me!',
+              -command =&gt; sub {
+                  $fname = $LoadDialog-&gt;Show(-Horiz =&gt; $Horiz);
+                  if (!defined($fname)) {
+                      $fname = &quot;Fine,Cancel, but no Chdir anymore!!!&quot;;
+                      $LoadDialog-&gt;configure(-Chdir =&gt;'NO');
+                  }
+              })
+        -&gt;pack(-expand =&gt; 1,
+               -fill =&gt; 'x');</pre>
+</dd>
+<dd>
+<pre>
+ $main-&gt;Checkbutton(-text =&gt; 'Horizontal',
+                   -variable =&gt; \$Horiz)
+        -&gt;pack(-expand =&gt; 1,
+               -fill =&gt; 'x');</pre>
+</dd>
+<dd>
+<pre>
+ $main-&gt;Button(-text =&gt; 'Exit',
+              -command =&gt; sub {
+                  $main-&gt;destroy;
+              })
+        -&gt;pack(-expand =&gt; 1,
+               -fill =&gt; 'x');</pre>
+</dd>
+<dd>
+<pre>
+ MainLoop;</pre>
+</dd>
+<dd>
+<pre>
+ print &quot;Exit Stage right!\n&quot;;</pre>
+</dd>
+<dd>
+<pre>
+ exit;</pre>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="methods">METHODS</a></h1>
+<p>The following non-standard method may be used with a FileDialog object</p>
+<p>
+</p>
+<h2><a name="show">Show</a></h2>
+<p>Displays the file dialog box for the user to operate.  Additional configuration
+items may be passed in at Show-time In other words, this code snippet:</p>
+<pre>
+  $fd-&gt;Show(-Title =&gt; 'Ooooh, Preeeeeety!');</pre>
+<p>is the same as this code snippet:</p>
+<pre>
+  $fd-&gt;configure(-Title =&gt; 'Ooooh, Preeeeeety!');
+  $fd-&gt;Show;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="configuration">CONFIGURATION</a></h1>
+<pre>
+        Any of the following configuration items may be set via the configure (or Show) method,
+or retrieved via the cget method.</pre>
+<p>
+</p>
+<h2><a name="flags"><em>Flags</em></a></h2>
+<p>Flags may be configured with either 1,'true', or 'yes' for 1, or 0, 'false', or 'no'
+for 0. Any portion of 'true', 'yes', 'false', or 'no' may be used, and case does not
+matter.</p>
+<p>
+</p>
+<h2><a name="chdir">-Chdir</a></h2>
+<p>Enable the user to change directories. The default is 1. If disabled, the directory
+list box will not be shown.</p>
+<p>
+</p>
+<h2><a name="create">-Create</a></h2>
+<p>Enable the user to specify a file that does not exist. If not enabled, and the user
+specifies a non-existent file, a dialog box will be shown informing the user of the
+error (This Dialog Box is configurable via the EDlg* switches, below).</p>
+<p>default: 1</p>
+<p>
+</p>
+<h2><a name="showall">-ShowAll</a></h2>
+<p>Determines whether hidden files (.*) are displayed in the File and Directory Listboxes.
+The default is 0. The Show All Checkbox reflects the setting of this switch.</p>
+<p>
+</p>
+<h2><a name="disableshowall">-DisableShowAll</a></h2>
+<p>Disables the ability of the user to change the status of the ShowAll flag. The default
+is 0 (the user is by default allowed to change the status).</p>
+<p>
+</p>
+<h2><a name="disablefpat">-DisableFPat</a></h2>
+<p>Disables the ability of the user to change the file selection pattern. The default
+is 0 (the user is by default allowed to change the status).</p>
+<p>
+</p>
+<h2><a name="grab">-Grab</a></h2>
+<p>Enables the File Dialog to do an application Grab when displayed. The default is 1.</p>
+<p>
+</p>
+<h2><a name="history">-History</a></h2>
+<p>Used with the ``-HistFile'' option.  Specifies how many files to retain in the 
+history list.  The default is 0 (keep all).</p>
+<p>
+</p>
+<h2><a name="histfile">-HistFile</a></h2>
+<p>Enables the keeping of a history of the previous files / directories selected.  
+The file specified must be writable.  If specified, a history of up to 
+``-History'' number of files will be kept and will be displayed in a ``JBrowseEntry'' 
+combo-box permitting user selection.</p>
+<p>
+</p>
+<h2><a name="horiz">-Horiz</a></h2>
+<p>True sets the File List box to be to the right of the Directory List Box. If 0, the
+File List box will be below the Directory List box. The default is 1.</p>
+<p>
+</p>
+<h2><a name="quickselect">-QuickSelect</a></h2>
+<p>Default 1, if set to 0, user must invoke the ``OK'' button to complete selection. 
+If 1 or 2, clicking item in the history menu automatically completes the 
+selection.  If 2, single-clicking a file in the file list completes selection
+(otherwise, a double-click is required).</p>
+<p>
+</p>
+<h2><a name="seldir">-SelDir</a></h2>
+<p>If 1 or 2, enables selection of a directory rather than a file, and disables the
+actions of the File List Box. Setting to 2 allows selection of either a file OR a directory.  The default is 0.</p>
+<p>
+</p>
+<h2><a name="special"><em>Special</em></a></h2>
+<p>
+</p>
+<h2><a name="fpat">-FPat</a></h2>
+<p>Sets the default file selection pattern. The default is '*'. Only files matching
+this pattern will be displayed in the File List Box.</p>
+<p>
+</p>
+<h2><a name="geometry">-Geometry</a></h2>
+<p>Sets the geometry of the File Dialog. Setting the size is a dangerous thing to do.
+If not configured, or set to '', the File Dialog will be centered.</p>
+<p>
+</p>
+<h2><a name="selhook">-SelHook</a></h2>
+<p>SelHook is configured with a reference to a routine that will be called when a file
+is chosen. The file is called with a sole parameter of the full path and file name
+of the file chosen. If the Create flag is disabled (and the user is not allowed
+to specify new files), the file will be known to exist at the time that SelHook is
+called. Note that SelHook will also be called with directories if the SelDir Flag
+is enabled, and that the FileDialog box will still be displayed. The FileDialog box
+should <strong>not</strong> be destroyed from within the SelHook routine, although it may generally
+be configured.</p>
+<p>SelHook routines return 0 to reject the selection and allow the user to reselect, and
+any other value to accept the selection. If a SelHook routine returns non-zero, the
+FileDialog will immediately be withdrawn, and the file will be returned to the caller.</p>
+<p>There may be only one SelHook routine active at any time. Configuring the SelHook
+routine replaces any existing SelHook routine. Configuring the SelHook routine with
+0 removes the SelHook routine. The default SelHook routine is undef.</p>
+<p>
+</p>
+<h2><a name="strings"><em>Strings</em></a></h2>
+<p>The following two switches may be used to set default variables, and to get final
+values after the Show method has returned (but has not been explicitly destroyed
+by the caller)</p>
+<p><strong>-File</strong>  The file selected, or the default file. The default is ''.</p>
+<p><strong>-Path</strong>  The path of the selected file, or the initial path. The default is $ENV{'HOME'}.</p>
+<p>
+</p>
+<h2><a name="labels_and_captions"><em>Labels and Captions</em></a></h2>
+<p>For support of internationalization, the text on any of the subwidgets may be
+changed.</p>
+<p><strong>-Title</strong>  The Title of the dialog box. The default is 'Select File:'.</p>
+<p><strong>-DirLBCaption</strong>  The Caption above the Directory List Box. The default is 'Directories'.</p>
+<p><strong>-FileLBCaption</strong>  The Caption above the File List Box. The default is 'Files'.</p>
+<p><strong>-FileEntryLabel</strong>  The label to the left of the File Entry. The Default is 'Filename:'.</p>
+<p><strong>-PathEntryLabel</strong>  The label to the left of the Path Entry. The default is 'Pathname:'.</p>
+<p><strong>-FltEntryLabel</strong>  The label to the left of the Filter entry. The default is 'Filter:'.</p>
+<p><strong>-ShowAllLabel</strong>  The text of the Show All Checkbutton. The default is 'Show All'.</p>
+<p>
+</p>
+<h2><a name="button_text"><em>Button Text</em></a></h2>
+<p>For support of internationalization, the text on the three buttons may be changed.</p>
+<p><strong>-OKButtonLabel</strong>  The text for the OK button. The default is 'OK'.</p>
+<p><strong>-RescanButtonLabel</strong>  The text for the Rescan button. The default is 'Refresh'.</p>
+<p><strong>-CancelButtonLabel</strong>  The text for the Cancel button. The default is 'Cancel'.</p>
+<p>
+</p>
+<h2><a name="error_dialog_switches"><em>Error Dialog Switches</em></a></h2>
+<p>If the Create switch is set to 0, and the user specifies a file that does not exist,
+a dialog box will be displayed informing the user of the error. These switches allow
+some configuration of that dialog box.</p>
+<p>
+</p>
+<h2><a name="edlgtitle">-EDlgTitle</a></h2>
+<p>The title of the Error Dialog Box. The default is 'File does not exist!'.</p>
+<p>
+</p>
+<h2><a name="edlgtext">-EDlgText</a></h2>
+<p>The message of the Error Dialog Box. The variables $path, $file, and $filename
+(the full path and filename of the selected file) are available. The default
+is <em>``You must specify an existing file.\n(\$filename not found)''</em></p>
+<p>
+</p>
+<hr />
+<h1><a name="author">Author</a></h1>
+<p><strong>Jim Turner</strong></p>
+<p>turnerjw at mesh . net</p>
+<p>A derived work from Tk::FileDialog, by:</p>
+<p><strong>Brent B. Powers, Merrill Lynch (B2Pi)</strong></p>
+<p><a href="mailto:powers@ml.com">powers@ml.com</a></p>
+<p>This code may be distributed under the same conditions as Perl itself.</p>
+
+</body>
+
+</html>

@@ -1,21 +1,19 @@
 ##################################################
 ##################################################
-##	
-##	JFileDialog - a reusable Tk-widget	by Jim Turner ##
-##
-##	Version 1.00
-##  12/11/96 by Jim W. Turner--
-##  (c) 1996 - 2004
-##
-##  Based on FileDialog widget
-##	by Brent B. Powers	
-##	Merrill Lynch	
-##	powers@swaps-comm.ml.com	
-##
+##                                              ##
+##   JFileDialog v. 1.10 - a reusable Tk-widget ##
+##      (c) 1996-2005 by Jim Turner             ##
+##      --Derived 12/11/96 by Jim W. Turner--   ##
+##      --from FileDialog                       ##
+##                                              ##
+##   by:  Brent B. Powers                       ##
+##   Merrill Lynch                              ##
+##   powers@swaps-comm.ml.com		                 ##
+##                                              ##
 ##################################################
 ##################################################
 
-# FileDialog Change History:
+# Change History:
 #   Version 1.0 - Initial implementation
 #   96 Jan 15	ringger@cs.rochester.edu - Fixed dialogue box creation.
 #   96 Jan 15	ringger - Added option for selecting directories.
@@ -38,7 +36,10 @@ for the buttons and Checkbox) are configurable for foreign language support.
 
 =head1 SYNOPSIS
 
-=over 4
+ my $LoadDialog = $main->JFileDialog(
+ 	-Title =>'Please select a file:',
+ 	-Create => 0
+ );
 
 =head2 Usage Description
 
@@ -51,8 +52,6 @@ undef.  undef is returned only if the user pressed the Cancel button.
 
 The following code creates a FileDialog and calls it.  Note that perl5.002gamma is
 required.
-
-=over 4
 
 =item
 
@@ -105,20 +104,9 @@ required.
 
  exit;
 
-
-=back
-
-=back
-
 =head1 METHODS
 
-=over 4
-
-=item
-
 The following non-standard method may be used with a FileDialog object
-
-=item
 
 =head2 Show
 
@@ -134,14 +122,9 @@ is the same as this code snippet:
   $fd->configure(-Title => 'Ooooh, Preeeeeety!');
   $fd->Show;
 
-
-=back
-
-=back
-
 =head1 CONFIGURATION
 
-Any of the following configuration items may be set via the configure (or Show) method,
+	Any of the following configuration items may be set via the configure (or Show) method,
 or retrieved via the cget method.
 
 =head2 I<Flags>
@@ -150,26 +133,12 @@ Flags may be configured with either 1,'true', or 'yes' for 1, or 0, 'false', or 
 for 0. Any portion of 'true', 'yes', 'false', or 'no' may be used, and case does not
 matter.
 
-=over 4
-
-=item
-
 =head2 -Chdir
-
-=over 8
-
-=item
 
 Enable the user to change directories. The default is 1. If disabled, the directory
 list box will not be shown.
 
-=back
-
 =head2 -Create
-
-=over 8
-
-=item
 
 Enable the user to specify a file that does not exist. If not enabled, and the user
 specifies a non-existent file, a dialog box will be shown informing the user of the
@@ -177,121 +146,67 @@ error (This Dialog Box is configurable via the EDlg* switches, below).
 
 default: 1
 
-=back
-
 =head2 -ShowAll
-
-=over 8
-
-=item
 
 Determines whether hidden files (.*) are displayed in the File and Directory Listboxes.
 The default is 0. The Show All Checkbox reflects the setting of this switch.
 
-=back
-
 =head2 -DisableShowAll
-
-=over 8
-
-=item
 
 Disables the ability of the user to change the status of the ShowAll flag. The default
 is 0 (the user is by default allowed to change the status).
 
-=back
+=head2 -DisableFPat
+
+Disables the ability of the user to change the file selection pattern. The default
+is 0 (the user is by default allowed to change the status).
 
 =head2 -Grab
 
-=over 8
-
-=item
-
 Enables the File Dialog to do an application Grab when displayed. The default is 1.
 
-=back
-
 =head2 -History
-
-=over 8
-
-=item
 
 Used with the "-HistFile" option.  Specifies how many files to retain in the 
 history list.  The default is 0 (keep all).
 
-=back
-
 =head2 -HistFile
-
-=over 8
-
-=item
 
 Enables the keeping of a history of the previous files / directories selected.  
 The file specified must be writable.  If specified, a history of up to 
 "-History" number of files will be kept and will be displayed in a "JBrowseEntry" 
 combo-box permitting user selection.
 
-=back
-
 =head2 -Horiz
-
-=over 8
-
-=item
 
 True sets the File List box to be to the right of the Directory List Box. If 0, the
 File List box will be below the Directory List box. The default is 1.
 
-=back
+=head2 -QuickSelect
+
+Default 1, if set to 0, user must invoke the "OK" button to complete selection. 
+If 1 or 2, clicking item in the history menu automatically completes the 
+selection.  If 2, single-clicking a file in the file list completes selection
+(otherwise, a double-click is required).
 
 =head2 -SelDir
-
-=over 8
-
-=item
 
 If 1 or 2, enables selection of a directory rather than a file, and disables the
 actions of the File List Box. Setting to 2 allows selection of either a file OR a directory.  The default is 0.
 
-=back
-
-=back
-
 =head2 I<Special>
 
-=over 4
-
-=item
-
 =head2 -FPat
-
-=over 8
-
-=item
 
 Sets the default file selection pattern. The default is '*'. Only files matching
 this pattern will be displayed in the File List Box.
 
-=back
-
 =head2 -Geometry
-
-=over 8
-
-=item
 
 Sets the geometry of the File Dialog. Setting the size is a dangerous thing to do.
 If not configured, or set to '', the File Dialog will be centered.
 
-=back
-
 =head2 -SelHook
-
-=over 8
-
-=item
 
 SelHook is configured with a reference to a routine that will be called when a file
 is chosen. The file is called with a sole parameter of the full path and file name
@@ -310,34 +225,20 @@ There may be only one SelHook routine active at any time. Configuring the SelHoo
 routine replaces any existing SelHook routine. Configuring the SelHook routine with
 0 removes the SelHook routine. The default SelHook routine is undef.
 
-=back
-
-=back
-
 =head2 I<Strings>
 
 The following two switches may be used to set default variables, and to get final
 values after the Show method has returned (but has not been explicitly destroyed
 by the caller)
 
-=over 4
-
-=item
-
 B<-File>  The file selected, or the default file. The default is ''.
 
 B<-Path>  The path of the selected file, or the initial path. The default is $ENV{'HOME'}.
-
-=back
 
 =head2 I<Labels and Captions>
 
 For support of internationalization, the text on any of the subwidgets may be
 changed.
-
-=over 4
-
-=item
 
 B<-Title>  The Title of the dialog box. The default is 'Select File:'.
 
@@ -353,15 +254,9 @@ B<-FltEntryLabel>  The label to the left of the Filter entry. The default is 'Fi
 
 B<-ShowAllLabel>  The text of the Show All Checkbutton. The default is 'Show All'.
 
-=back
-
 =head2 I<Button Text>
 
 For support of internationalization, the text on the three buttons may be changed.
-
-=over 4
-
-=item
 
 B<-OKButtonLabel>  The text for the OK button. The default is 'OK'.
 
@@ -369,43 +264,29 @@ B<-RescanButtonLabel>  The text for the Rescan button. The default is 'Refresh'.
 
 B<-CancelButtonLabel>  The text for the Cancel button. The default is 'Cancel'.
 
-=back
-
 =head2 I<Error Dialog Switches>
 
 If the Create switch is set to 0, and the user specifies a file that does not exist,
 a dialog box will be displayed informing the user of the error. These switches allow
 some configuration of that dialog box.
 
-=over 4
-
-=item
-
 =head2 -EDlgTitle
-
-=over 8
-
-=item
 
 The title of the Error Dialog Box. The default is 'File does not exist!'.
 
-=back
-
 =head2 -EDlgText
-
-=over 8
-
-=item
 
 The message of the Error Dialog Box. The variables $path, $file, and $filename
 (the full path and filename of the selected file) are available. The default
 is I<"You must specify an existing file.\n(\$filename not found)">
 
-=back
-
-=back
-
 =head1 Author
+
+B<Jim Turner>
+
+turnerjw at mesh . net
+
+A derived work from Tk::FileDialog, by:
 
 B<Brent B. Powers, Merrill Lynch (B2Pi)>
 
@@ -418,7 +299,7 @@ This code may be distributed under the same conditions as Perl itself.
 package Tk::JFileDialog;
 
 use vars qw($VERSION);
-$VERSION = '1.00';
+$VERSION = '1.10';
 
 require 5.002;
 use Tk;
@@ -462,7 +343,7 @@ sub Populate
 	$FDialog->SUPER::Populate(@args);
 	foreach my $i (keys %{$args[0]})
 	{
-		if ($i eq '-HistFile' || $i eq '-History')
+		if ($i eq '-HistFile' || $i eq '-History' || $i eq 'QuickSelect')
 		{
 			$FDialog->{Configure}{$i} = $args[0]->{$i};
 		}
@@ -501,6 +382,7 @@ sub Populate
 	$FDialog->ConfigSpecs(-Chdir		=> ['PASSIVE', undef, undef, 1],
 			-Create		=> ['PASSIVE', undef, undef, 1],
 			-DisableShowAll	=> ['PASSIVE', undef, undef, 0],
+			-DisableFPat	=> ['PASSIVE', undef, undef, 0],
 			-FPat			=> ['PASSIVE', undef, undef, '*'],
 			-File			=> ['PASSIVE', undef, undef, ''],
 			-Geometry		=> ['PASSIVE', undef, undef, undef],
@@ -525,6 +407,7 @@ sub Populate
 	'File does not exist!'],
 			-History => ['PASSIVE', undef, undef, 0],
 			-HistFile => ['PASSIVE', undef, undef, undef],
+			-QuickSelect => ['PASSIVE', undef, undef, 1],
 			-EDlgText		=> ['PASSIVE', undef, undef,
 	"You must specify an existing file.\n"
 			. "(\$filename not found)"]);
@@ -646,6 +529,7 @@ sub Show
 	$self->SetFlag('Create');
 	$self->SetFlag('ShowAll');
 	$self->SetFlag('DisableShowAll');
+	$self->SetFlag('DisableFPat');    #ADDED 20050126.
 	$self->SetFlag('Horiz');
 	$self->SetFlag('Grab');
 	#$self->SetFlag('SelDir');
@@ -661,6 +545,8 @@ sub Show
 	{
 		$self->{'SABox'}->configure(-state => 'normal');
 	}
+	$self->{'FPat'}->configure(-state => ($self->{Configure}{-DisableFPat})
+			? 'disabled' : 'normal');    #ADDED 20050126.
 	## Enable or disable the file entry box
 	if ($self->{Configure}{-SelDir} == 1)
 	{
@@ -863,19 +749,22 @@ sub BindFile
 	}
 	);
 	## A double-click selects the file for good
-	$self->{'FileList'}->bind("<Double-1>", sub
+	if ($self->{Configure}{-QuickSelect} == 2)
 	{
-		if ($self->{Configure}{-SelDir} != 1)
+		$self->{'FileList'}->bind("<1>", sub
 		{
-			my($f) = $self->{'FileList'}->curselection;
-			return if !defined($f);
-			$self->{'File'} = $self->{'FileList'}->get($f);
-			$self->{'OK'}->invoke;
+			if ($self->{Configure}{-SelDir} != 1)
+			{
+				my($f) = $self->{'FileList'}->curselection;
+				return if !defined($f);
+				$self->{'File'} = $self->{'FileList'}->get($f);
+				$self->{'OK'}->invoke;
+			}
 		}
+		);
 	}
-	);
 	$self->{'FileList'}->bind("<Return>", sub
-	{# !!!
+	{
 		if ($self->{Configure}{-SelDir} != 1)
 		{
 			my($f) = $self->{'FileList'}->index('active');
@@ -884,6 +773,17 @@ sub BindFile
 			$self->{Configure}{-File} = $self->{'FileList'}->get($f);
 			$self->{'OK'}->focus;
 			$self->{'OK'}->invoke;
+		}
+	}
+	);
+	$self->{'FileList'}->bind("<space>", sub
+	{
+		if ($self->{Configure}{-SelDir} != 1)
+		{
+			my($f) = $self->{'FileList'}->index('active');
+			return if !defined($f);
+			$self->{'File'} = $self->{'FileList'}->get($f);
+			$self->{Configure}{-File} = $self->{'FileList'}->get($f);
 		}
 	}
 	);
@@ -1048,7 +948,7 @@ sub BuildBrowse
 				-state => 'readonly',
 				-variable => \$self->{Configure}{$LabelVar},
 				-choices => \@{$self->{Configure}{HistList}},
-				-browsecmd => sub { $self->{'OK'}->invoke  unless ($_[2] =~ /space$/); },
+				-browsecmd => sub { print STDERR "-ARGS=".join('|',@_)."=\n"; $self->{'OK'}->invoke  unless (!$self->{Configure}{-QuickSelect} or $_[2] =~ /space$/); },
 				-listrelief => 'flat')
 			->pack(@rightPack, @expand, @xfill);
 	$eFrame->packForget  unless ($self->{Configure}{-HistFile});
@@ -1107,10 +1007,9 @@ sub BuildFDWindow
 	$self->{'patFrame'}->{'Label'} = $patFrame->Label->pack(@leftPack); # !!!
 	
 	## Now the entry...
-	$patFrame->Entry(-textvariable => \$self->{Configure}{-FPat})
-			->pack(@leftPack, @expand, @xfill)  # !!!
-			->bind("<Return>",sub {\&RescanFiles($self);});
-	
+	$self->{'FPat'} = $patFrame->Entry(-textvariable => \$self->{Configure}{-FPat})
+			->pack(@leftPack, @expand, @xfill);
+	$self->{'FPat'}->bind("<Return>",sub {\&RescanFiles($self);});
 	
 	## and the radio box
 	$self->{'SABox'} = $patFrame->Checkbutton(-variable => \$self->{Configure}{-ShowAll},
@@ -1614,5 +1513,26 @@ sub chgDriveLetter   #ADDED 20010130 BY JWT.
 
 ### Return 1 to the calling  use statement ###
 1;
-
+### End of file FileDialog.pm ###
 __END__
+From  powers@swaps.ml.com  Fri Mar  1 07:49:17 1996 
+Return-Path: <powers@swaps.ml.com> 
+From: powers@swaps.ml.com (Brent B. Powers Swaps Programmer X2293)
+Date: Fri, 1 Mar 1996 02:48:31 -0500 
+Message-Id: <199603010748.CAA16488@swapsdvlp02.ny-swaps-develop.ml.com> 
+To: nik@tiuk.ti.com 
+Cc: ringger@cs.rochester.edu, powers@ml.com 
+Subject: New FileDialog widget 
+P-From: "Brent B. Powers Swaps Programmer x2293" <powers@swaps.ml.com> 
+
+This one's a new and improved version of FileDialog.pm.  My bus error
+problem was finally solved via perl5.002gamma, so all now should work
+properly.   Could you please let me know that you did get
+this... We're having some trouble with mail gateways.
+
+Cheers.
+
+
+
+
+Brent B. Powers             Merrill Lynch          powers@swaps.ml.com
