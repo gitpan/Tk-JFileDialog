@@ -1,7 +1,7 @@
 ##################################################
 ##################################################
 ##                                              ##
-##   JFileDialog v. 1.20 - a reusable Tk-widget ##
+##   JFileDialog v. 1.21 - a reusable Tk-widget ##
 ##      (c) 1996-2005 by Jim Turner             ##
 ##      --Derived 12/11/96 by Jim W. Turner--   ##
 ##      --from FileDialog                       ##
@@ -231,6 +231,13 @@ The following two switches may be used to set default variables, and to get fina
 values after the Show method has returned (but has not been explicitly destroyed
 by the caller)
 
+=head2 -SelectMode
+ 
+Sets the selectmode of the File Dialog.  If not configured it will be defaulted
+to 'single'.  If set to 'multiple', then the user may select more than one file 
+and a comma-delimited list of all selected files is returned.  Otherwise, only 
+a single file may be selected.  
+ 
 B<-File>  The file selected, or the default file. The default is ''.
 
 B<-Path>  The path of the selected file, or the initial path. The default is $ENV{'HOME'}.
@@ -299,7 +306,7 @@ This code may be distributed under the same conditions as Perl itself.
 package Tk::JFileDialog;
 
 use vars qw($VERSION);
-$VERSION = '1.20';
+$VERSION = '1.21';
 
 require 5.002;
 use Tk;
@@ -406,6 +413,7 @@ sub Populate
 			-RescanButtonLabel	=> ['METHOD', undef, undef, '~Refresh'],
 			-CancelButtonLabel	=> ['METHOD', undef, undef, '~Cancel'],
 			-SelHook		=> ['PASSIVE', undef, undef, undef],
+			-SelectMode => ['PASSIVE', undef, undef, 'single'],   #ADDED 20050416 TO PERMIT MULTIFILE SELECTIONS, THANKS TO Paul Falbe FOR THIS PATCH!
 			-ShowAll		=> ['PASSIVE', undef, undef, 0],
 			-Title		=> ['PASSIVE', undef, undef, "Select File:"],
 			-EDlgTitle		=> ['PASSIVE', undef, undef,
@@ -684,6 +692,9 @@ sub BuildListBox
 	Tk::Autoscroll::Init($self->{"$listvar"})  if ($useAutoScroll);
 	$self->{"$listvar"}->bind('<Enter>', sub { $self->bind('<MouseWheel>', [ sub { $self->{"$listvar"}->yview('scroll',-($_[1]/120)*1,'units') }, Tk::Ev("D")]); });
 	$self->{"$listvar"}->bind('<Leave>', sub { $self->bind('<MouseWheel>', [ sub { Tk->break; }]) });
+
+	#NEXT LINE ADDED 20050416 TO PERMIT MULTIFILE SELECTIONS, THANKS TO Paul Falbe FOR THIS PATCH!
+	$self->{"$listvar"}->configure(-selectmode => $self->{Configure}{-SelectMode});
 }
 
 sub BindDir
@@ -760,8 +771,11 @@ sub BindFile
 	{
 		if ($self->{Configure}{-SelDir} != 1)
 		{
-			$self->{Configure}{-File} =
-					$self->{'FileList'}->get($self->{'FileList'}->curselection);
+#			$self->{Configure}{-File} =
+#					$self->{'FileList'}->get($self->{'FileList'}->curselection);
+			#PREV. CHGD. TO NEXT 20050416 TO PERMIT MULTIFILE SELECTIONS, THANKS TO Paul Falbe FOR THIS PATCH!
+ 			$self->{Configure}{-File} = join ",", map { $self->{'FileList'}->get($_) }
+                                                     $self->{'FileList'}->curselection;
 		}
 	}
 	);
@@ -769,6 +783,21 @@ sub BindFile
 	if ($self->{Configure}{-QuickSelect} == 2)
 	{
 		$self->{'FileList'}->bind("<1>", sub
+		{
+			if ($self->{Configure}{-SelDir} != 1)
+			{
+				my($f) = $self->{'FileList'}->curselection;
+				return if !defined($f);
+				#$self->{'File'} = $self->{'FileList'}->get($f);
+				$self->{Configure}{-File} = $self->{'FileList'}->get($f);
+				$self->{'OK'}->invoke;
+			}
+		}
+		);
+	}
+	elsif ($self->{Configure}{-QuickSelect})
+	{
+		$self->{'FileList'}->bind("<Double-ButtonRelease-1>", sub
 		{
 			if ($self->{Configure}{-SelDir} != 1)
 			{
@@ -787,7 +816,11 @@ sub BindFile
 			my($f) = $self->{'FileList'}->index('active');
 			return if !defined($f);
 			$self->{'File'} = $self->{'FileList'}->get($f);
-			$self->{Configure}{-File} = $self->{'FileList'}->get($f);
+#			$self->{Configure}{-File} = $self->{'FileList'}->get($f);
+			#PREV. CHGD. TO NEXT 20050416 TO PERMIT MULTIFILE SELECTIONS, THANKS TO Paul Falbe FOR THIS PATCH!
+ 			$self->{Configure}{-File} = join ",", map { $self->{'FileList'}->get($_) }
+                                                     $self->{'FileList'}->curselection;
+			$self->{Configure}{-File} ||= $self->{'File'};
 			$self->{'OK'}->focus;
 			$self->{'OK'}->invoke;
 		}
@@ -800,7 +833,10 @@ sub BindFile
 			my($f) = $self->{'FileList'}->index('active');
 			return if !defined($f);
 			$self->{'File'} = $self->{'FileList'}->get($f);
-			$self->{Configure}{-File} = $self->{'FileList'}->get($f);
+#			$self->{Configure}{-File} = $self->{'FileList'}->get($f);
+			#PREV. CHGD. TO NEXT 20050416 TO PERMIT MULTIFILE SELECTIONS, THANKS TO Paul Falbe FOR THIS PATCH!
+ 			$self->{Configure}{-File} = join ",", map { $self->{'FileList'}->get($_) }
+                                                     $self->{'FileList'}->curselection;
 		}
 	}
 	);
@@ -1275,6 +1311,7 @@ sub add2Hist
 						&& $i >= $self->{Configure}{-History});
 			}
 		}
+		close TEMP;
 	}
 }
 
@@ -1427,7 +1464,8 @@ sub GetReturn
 			}
 			elsif ($self->{Configure}{-SelDir} != 2 || $self->{Configure}{-File} gt ' ')
 			{
-				$fname = $path . $self->{Configure}{-File};
+				#$fname = $path . $self->{Configure}{-File}; #CHGD. TO NEXT 20050417 PER PATCH FROM Paul Falbe.
+				($fname = $path . $self->{Configure}{-File}) =~ s/,/,$path/g;
 			}
 			## Make sure that the file exists, if the user is not allowed
 			## to create
@@ -1485,7 +1523,9 @@ sub LbFindSelection
 		$srchval = $var_ref;
 	}
 	#my $l = $w;
-	$l->configure(-selectmode => 'browse');
+	#$l->configure(-selectmode => 'browse');  #CHGD. TO NEXT. 20050418 TO ALLOW MULTIPLE SELECTIONS.
+	$l->configure(-selectmode => 'browse')
+			if ($l->{Configure}{-selectmode} eq 'single');
 	my (@listsels) = $l->get('0','end');
 	foreach my $i (0..$#listsels)
 	{

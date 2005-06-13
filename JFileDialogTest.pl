@@ -33,6 +33,13 @@ $FileButton = $ButtonFrame->Button(
 		-underline => 7,
 		-command => [\&getfile]);
 $FileButton->pack(-side=>'left', -expand=>1, -padx=>'2m', -pady=>'2m');
+$MultiFileButton = $ButtonFrame->Button(
+		-padx => 11,
+		-pady =>  4,
+		-text => 'Select File(s)',
+		-underline => 7,
+		-command => [\&getfiles]);
+$MultiFileButton->pack(-side=>'left', -expand=>1, -padx=>'2m', -pady=>'2m');
 
 $DirButton = $ButtonFrame->Button(
 		-padx => 11,
@@ -67,6 +74,26 @@ sub getfile
 			-Path => $path,
 			-History => 12,
 			-HistFile => "./FileHistory.txt",
+			-Create => 1);
+
+	$myfile = $fileDialog->Show();
+	if ($myfile =~ /\S/)
+	{
+		$topLabel->configure(-text => "file: $myfile");
+	}
+}
+
+sub getfiles
+{
+	my $mytitle = "Select file(s):";
+	my ($create) = 0;
+	my ($fileDialog) = $MainWin->JFileDialog(
+			-Title=> $mytitle,
+			-Path => $path,
+			-History => 12,
+			-HistFile => "./FileHistory.txt",
+			-SelectMode => 'multiple',
+			#-QuickSelect => 2,
 			-Create => 1);
 
 	$myfile = $fileDialog->Show();
