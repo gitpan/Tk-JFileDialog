@@ -136,11 +136,24 @@ CONFIGURATION
         Used with the "-HistFile" option. Specifies how many files to retain
         in the history list. The default is 0 (keep all).
 
+  -HistDeleteOk
+        If set, allows user to delete items from the history dropdown list and 
+        thus the history file.
+
   -HistFile
         Enables the keeping of a history of the previous files / directories
         selected. The file specified must be writable. If specified, a
         history of up to "-History" number of files will be kept and will be
         displayed in a "JBrowseEntry" combo-box permitting user selection.
+
+  -PathFile
+        Specifies a file containing a list of "favorite paths" bookmarks to 
+        show in a dropdown list allowing quick-changes in directories.  This 
+        file sould be built as a simple ASCII text file containing each full 
+        path to be bookmarked on a separate line.  The path may be optionally 
+        followed by a semicolon and a short text description to appear in the 
+        dropdown list in leau of the path itself.  Windows paths should 
+        include a drive-letter and a colon.
 
   -Horiz
         True sets the File List box to be to the right of the Directory List

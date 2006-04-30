@@ -170,7 +170,7 @@ position the label above the widget, use "-labelPack => [-side => 'top']".
 package Tk::JBrowseEntry;
 
 use vars qw($VERSION);
-$VERSION = '4.61';
+$VERSION = '4.63';
 
 use Tk;
 use Carp;
@@ -285,6 +285,8 @@ sub Populate
 	$w->{-tabcomplete} = delete($args->{-tabcomplete})  if (defined($args->{-tabcomplete}));
 	$w->{-altbinding} = 0;  #NEXT 2 ADDED 20050112 TO SUPPORT ALTERNATE KEY-ACTION MODELS.
 	$w->{-altbinding} = delete($args->{-altbinding})  if (defined($args->{-altbinding}));
+	#NEXT LINE ADDED 20060429 TO SUPPORT OPTION FOR USER DELETION OF LISTBOX ITEMS.
+	$w->{-deleteitemsok} = delete($args->{-deleteitemsok})  if (defined($args->{-deleteitemsok}));
 #print STDERR "-altbinding=$w->{-altbinding}= w=$w=\n";
 #	unless (defined($w->{-noselecttext}))
 #	{
@@ -884,6 +886,8 @@ sub SetBindings
 		Tk->break;
 	}
 	);
+	$l->bind('<Delete>' => sub { $w->delete($w->LbIndex) })   #ADDED 20060429 TO SUPPORT OPTION FOR USER DELETION OF LISTBOX ITEMS.
+			if ($w->{-deleteitemsok});
 	$l->bind('<Key>' => [\&keyFn,$w,$e,$l,1]);  
 			#if $w->cget( "-state" ) eq "readonly";
 	$e->bind('<Key>' => [\&keyFn,$w,$e,$l]);
@@ -1214,7 +1218,8 @@ sub LbFindSelection
 		$index = 0  if ($index > $#listsels);
 		#if ($listsels[$index] =~ /^$srchval/i)
 		#CHGD. TO NEXT 20030531 PER PATCH BY FRANK HERRMANN.
-		if (defined $srchval && $listsels[$index] =~ /^$srchval/i)
+#		if (defined $srchval && $listsels[$index] =~ /^$srchval/i) #CHGD TO NEXT 20060429 TO PREVENT TK-ERROR ON "("!
+		if (defined $srchval && $listsels[$index] =~ /^\Q$srchval\E/i)
 		{
 			$l->selectionClear('0','end');
 			$l->activate($index);

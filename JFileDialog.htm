@@ -38,7 +38,9 @@
 		<li><a href="#disablefpat">-DisableFPat</a></li>
 		<li><a href="#grab">-Grab</a></li>
 		<li><a href="#history">-History</a></li>
+		<li><a href="#histdeleteok">-HistDeleteOk</a></li>
 		<li><a href="#histfile">-HistFile</a></li>
+		<li><a href="#pathfile">-PathFile</a></li>
 		<li><a href="#horiz">-Horiz</a></li>
 		<li><a href="#quickselect">-QuickSelect</a></li>
 		<li><a href="#seldir">-SelDir</a></li>
@@ -237,11 +239,25 @@ is 0 (the user is by default allowed to change the status).</p>
 history list.  The default is 0 (keep all).</p>
 <p>
 </p>
+<h2><a name="histdeleteok">-HistDeleteOk</a></h2>
+<p>If set, allows user to delete items from the history dropdown list and thus the 
+history file.</p>
+<p>
+</p>
 <h2><a name="histfile">-HistFile</a></h2>
 <p>Enables the keeping of a history of the previous files / directories selected.  
 The file specified must be writable.  If specified, a history of up to 
 ``-History'' number of files will be kept and will be displayed in a ``JBrowseEntry'' 
 combo-box permitting user selection.</p>
+<p>
+</p>
+<h2><a name="pathfile">-PathFile</a></h2>
+<p>Specifies a file containing a list of "favorite paths" bookmarks to show in a 
+dropdown list allowing quick-changes in directories.  This file sould be built 
+as a simple ASCII text file containing each full path to be bookmarked on a 
+separate line.  The path may be optionally followed by a semicolon and a short 
+text description to appear in the dropdown list in leau of the path itself.
+Windows paths should include a drive-letter and a colon.</p>
 <p>
 </p>
 <h2><a name="horiz">-Horiz</a></h2>

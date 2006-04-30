@@ -170,12 +170,22 @@ Enables the File Dialog to do an application Grab when displayed. The default is
 Used with the "-HistFile" option.  Specifies how many files to retain in the 
 history list.  The default is 0 (keep all).
 
+=head2 -HistDeleteOk
+
+If set, allows user to delete items from the history dropdown list and thus the 
+history file.
+
 =head2 -HistFile
 
 Enables the keeping of a history of the previous files / directories selected.  
 The file specified must be writable.  If specified, a history of up to 
 "-History" number of files will be kept and will be displayed in a "JBrowseEntry" 
 combo-box permitting user selection.
+
+=head2 -PathFile
+
+Specifies a file containing a list of "favorite paths" bookmarks to show in a 
+dropdown list allowing quick-changes in directories.
 
 =head2 -Horiz
 
@@ -306,7 +316,7 @@ This code may be distributed under the same conditions as Perl itself.
 package Tk::JFileDialog;
 
 use vars qw($VERSION);
-$VERSION = '1.21';
+$VERSION = '1.31';
 
 require 5.002;
 use Tk;
@@ -350,7 +360,8 @@ sub Populate
 	$FDialog->SUPER::Populate(@args);
 	foreach my $i (keys %{$args[0]})
 	{
-		if ($i eq '-HistFile' || $i eq '-History' || $i eq 'QuickSelect')
+		if ($i eq '-HistFile' || $i eq '-History' || $i eq 'QuickSelect'
+				|| $i eq '-PathFile' || $i eq '-HistDeleteOk')
 		{
 			$FDialog->{Configure}{$i} = $args[0]->{$i};
 		}
@@ -407,6 +418,7 @@ sub Populate
 			-FileEntryLabel	=> ['METHOD', undef, undef, 'Filename:'],
 			-PathEntryLabel	=> ['METHOD', undef, undef, 'Pathname:'],
 			-HistEntryLabel	=> ['METHOD', undef, undef, 'History:'],
+			-FavEntryLabel	=> ['METHOD', undef, undef, 'Favorite Paths:'],
 			-FltEntryLabel	=> ['METHOD', undef, undef, 'Filter:'],
 			-ShowAllLabel		=> ['METHOD', undef, undef, 'ShowAll'],
 			-OKButtonLabel	=> ['METHOD', undef, undef, '~OK'],
@@ -420,6 +432,8 @@ sub Populate
 	'File does not exist!'],
 			-History => ['PASSIVE', undef, undef, 0],
 			-HistFile => ['PASSIVE', undef, undef, undef],
+			-HistDeleteOk => ['PASSIVE', undef, undef, undef],
+			-PathFile => ['PASSIVE', undef, undef, undef],
 			-QuickSelect => ['PASSIVE', undef, undef, 1],
 			-EDlgText		=> ['PASSIVE', undef, undef,
 	"You must specify an existing file.\n"
@@ -463,6 +477,10 @@ sub SetButton
 sub HistEntryLabel
 {
 	&SetLabel('HEF', @_);
+}
+sub FavEntryLabel
+{
+	&SetLabel('FAV', @_);
 }
 sub FileEntryLabel
 {
@@ -1019,10 +1037,57 @@ sub BuildBrowse
 				-state => 'readonly',
 				-variable => \$self->{Configure}{$LabelVar},
 				-choices => \@{$self->{Configure}{HistList}},
+				-deleteitemsok => $self->{Configure}{-HistDeleteOk}||0,
 				-browsecmd => sub { print STDERR "-ARGS=".join('|',@_)."=\n"; $self->{'OK'}->invoke  unless (!$self->{Configure}{-QuickSelect} or $_[2] =~ /space$/); },
 				-listrelief => 'flat')
 			->pack(@rightPack, @expand, @xfill);
 	$eFrame->packForget  unless ($self->{Configure}{-HistFile});
+	return $eFrame;
+}
+
+sub BuildFAV
+{
+	### Build the entry, label, and frame indicated.  This is a
+	### convenience routine to avoid duplication of code between
+	### the file and the path entry widgets
+	my($self, $LabelVar, $entry) = @_;
+	my($LabelType) = $LabelVar;
+	$LabelVar = "-$LabelVar";
+	
+	## Create the entry frame
+	my $eFrame = $self->Frame(@raised)
+			->pack(-padx => '4m', -ipady => '2m',@topPack, @xfill); # !!!
+	
+	## Now create and pack the title and entry
+	$eFrame->{'Label'} = $eFrame->Label->pack(@leftPack); # !!!
+
+	${$self->{Configure}{PathList}}{''} = '';
+	my ($l, $r);
+	if ($self->{Configure}{-PathFile} && open(TEMP, $self->{Configure}{-PathFile}))
+	{
+		while (<TEMP>)
+		{
+			chomp;
+			if ($_)
+			{
+				$l = $_;
+				$r = '';
+				($l,$r) = split(/\;/);
+				$r ||= $l;
+				${$self->{Configure}{PathList}}{$l} = $r;
+			}
+		}
+	}
+
+	$self->{"$entry"} = $eFrame->JBrowseEntry(@raised,
+				-label => '',
+				-state => 'readonly',
+				-variable => \$self->{Configure}{$LabelVar},
+				-choices => \%{$self->{Configure}{PathList}},
+				-browsecmd => sub { print STDERR "-PATHS=".join('|',@_)."=\n"; $self->{Configure}{-Path} = $self->{$entry}->dereference($self->{Configure}{$LabelVar}); &RescanFiles($self)  unless (!$self->{Configure}{-QuickSelect} or $_[2] =~ /space$/); },
+				-listrelief => 'flat')
+			->pack(@rightPack, @expand, @xfill);
+	$eFrame->packForget  unless ($self->{Configure}{-PathFile} && -r $self->{Configure}{-PathFile});
 	return $eFrame;
 }
 
@@ -1087,6 +1152,9 @@ sub BuildFDWindow
 			-command => sub {\&RescanFiles($self);})
 			->pack(@leftPack);
 	
+	### JWT:Build the Favorites Dropdown list.
+	$self->{'FAV'} = &BuildFAV($self, 'FAV', 'FavEntry');
+
 	### FINALLY!!! the button frame
 	my $butFrame = $self->Frame(@raised);
 	$butFrame->pack(-padx => '2m', -pady => '2m', @topPack, @xfill);
@@ -1325,6 +1393,7 @@ sub GetReturn
 	if ($self->{Configure}{-Hist})
 	{
 		$fname = $self->{Configure}{-Hist};
+		@{$self->{Configure}{HistList}} = $self->{HistEntry}->choices();
 		&add2Hist($self, $fname);
 	}
 	elsif ($^O =~ /Win/i)

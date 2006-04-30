@@ -292,12 +292,24 @@ Enables the File Dialog to do an application Grab when displayed. The default is
 .IX Subsection "-History"
 Used with the \*(L"\-HistFile\*(R" option.  Specifies how many files to retain in the 
 history list.  The default is 0 (keep all).
+.Sh "\-HistDeleteOk"
+.IX Subsection "-HistDeleteOk"
+Used with the ``-HistFile'' option.  Specifies how many files to retain in the 
+history list.  The default is 0 (keep all).
 .Sh "\-HistFile"
 .IX Subsection "-HistFile"
 Enables the keeping of a history of the previous files / directories selected.  
 The file specified must be writable.  If specified, a history of up to 
 \&\*(L"\-History\*(R" number of files will be kept and will be displayed in a \*(L"JBrowseEntry\*(R" 
 combo-box permitting user selection.
+.Sh "\-PathFile"
+.IX Subsection "-PathFile"
+Specifies a file containing a list of "favorite paths" bookmarks to show in a 
+dropdown list allowing quick-changes in directories.  This file sould be built 
+as a simple ASCII text file containing each full path to be bookmarked on a 
+separate line.  The path may be optionally followed by a semicolon and a short 
+text description to appear in the dropdown list in leau of the path itself.
+Windows paths should include a drive-letter and a colon.
 .Sh "\-Horiz"
 .IX Subsection "-Horiz"
 True sets the File List box to be to the right of the Directory List Box. If 0, the

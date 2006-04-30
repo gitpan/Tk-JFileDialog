@@ -74,6 +74,7 @@ sub getfile
 			-Path => $path,
 			-History => 12,
 			-HistFile => "./FileHistory.txt",
+			-PathFile => "./Bookmarks.txt",
 			-Create => 1);
 
 	$myfile = $fileDialog->Show();
@@ -90,8 +91,6 @@ sub getfiles
 	my ($fileDialog) = $MainWin->JFileDialog(
 			-Title=> $mytitle,
 			-Path => $path,
-			-History => 12,
-			-HistFile => "./FileHistory.txt",
 			-SelectMode => 'multiple',
 			#-QuickSelect => 2,
 			-Create => 1);
@@ -112,6 +111,7 @@ sub getpath
 			-Path => $ENV{HOME} || '.',
 			-History => 12,
 			-HistFile => "./PathHistory.txt",
+			-PathFile => "./Bookmarks.txt",
 			-SelDir => 1,
 			-Create => 0);
 
