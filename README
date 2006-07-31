@@ -39,7 +39,12 @@ SYNOPSIS
      my($fname);
 
      my($LoadDialog) = $main->JFileDialog(-Title =>'This is my title',
-                                        -Create => 0);
+			-Create => 0,
+			-History => 12,
+			-HistDeleteOk => 1,
+			-HistFile => "./FileHistory.txt",
+			-PathFile => "./Bookmarks.txt",
+	);
 
      $LoadDialog->configure(-FPat => '*pl',
                            -ShowAll => 'NO');

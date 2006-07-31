@@ -1,8 +1,8 @@
 ##################################################
 ##################################################
 ##                                              ##
-##   JFileDialog v. 1.21 - a reusable Tk-widget ##
-##      (c) 1996-2005 by Jim Turner             ##
+##   JFileDialog v. 1.32 - a reusable Tk-widget ##
+##      (c) 1996-2006 by Jim Turner             ##
 ##      --Derived 12/11/96 by Jim W. Turner--   ##
 ##      --from FileDialog                       ##
 ##                                              ##
@@ -175,6 +175,14 @@ history list.  The default is 0 (keep all).
 If set, allows user to delete items from the history dropdown list and thus the 
 history file.
 
+=head2 -HistUsePath
+
+If set, the path is set to that of the last file selected from the history.
+
+=head2 -HistUsePathButton
+
+If set, the path the toggle button for -HistUsePath is defaulted to set, otherwise default is off.
+
 =head2 -HistFile
 
 Enables the keeping of a history of the previous files / directories selected.  
@@ -316,7 +324,7 @@ This code may be distributed under the same conditions as Perl itself.
 package Tk::JFileDialog;
 
 use vars qw($VERSION);
-$VERSION = '1.31';
+$VERSION = '1.32';
 
 require 5.002;
 use Tk;
@@ -361,7 +369,8 @@ sub Populate
 	foreach my $i (keys %{$args[0]})
 	{
 		if ($i eq '-HistFile' || $i eq '-History' || $i eq 'QuickSelect'
-				|| $i eq '-PathFile' || $i eq '-HistDeleteOk')
+				|| $i eq '-PathFile' || $i eq '-HistDeleteOk' 
+				|| $i eq '-HistUsePath' || $i eq '-HistUsePathButton')
 		{
 			$FDialog->{Configure}{$i} = $args[0]->{$i};
 		}
@@ -433,6 +442,8 @@ sub Populate
 			-History => ['PASSIVE', undef, undef, 0],
 			-HistFile => ['PASSIVE', undef, undef, undef],
 			-HistDeleteOk => ['PASSIVE', undef, undef, undef],
+			-HistUsePath => ['PASSIVE', undef, undef, undef],
+			-HistUsePathButton => ['PASSIVE', undef, undef, undef],
 			-PathFile => ['PASSIVE', undef, undef, undef],
 			-QuickSelect => ['PASSIVE', undef, undef, 1],
 			-EDlgText		=> ['PASSIVE', undef, undef,
@@ -662,6 +673,23 @@ sub Show
 	$self->withdraw;
 	
 	return $self->{'RetFile'};
+}
+
+sub getLastPath
+{
+	my ($self) = shift;
+	
+	my $path = $self->{Configure}{-Path};
+	$path = $driveletter . $path  if ($driveletter && $^O =~ /Win/i);
+	return $path;
+}
+
+sub getHistUsePathButton
+{
+	my ($self) = shift;
+	
+	return 0  unless (defined $self->{"histToggleVal"});
+	return $self->{"histToggleVal"};
 }
 
 ####  PRIVATE METHODS AND SUBROUTINES ####
@@ -1032,16 +1060,49 @@ sub BuildBrowse
 		}
 	}
 
+	if ($LabelVar eq '-Hist')
+	{
+		$self->{"histToggleVal"} = ($self->{Configure}{-HistUsePathButton} == 1) ? 1 : 0;
+		if ($self->{Configure}{-HistUsePath}  && $self->{Configure}{-HistUsePath} != 1)
+		{
+			my $pathLabel = $self->{Configure}{-HistUsePath};
+			$pathLabel = 'Keep Path'  if ($self->{Configure}{-HistUsePath} =~ /^\-?\d/);
+			$self->{"histToggle"} = $eFrame->Checkbutton(
+				-text   => $pathLabel,
+				-variable=> \$self->{"histToggleVal"}
+			)->pack(@rightPack);
+		}
+	}
 	$self->{"$entry"} = $eFrame->JBrowseEntry(@raised,
 				-label => '',
 				-state => 'readonly',
 				-variable => \$self->{Configure}{$LabelVar},
 				-choices => \@{$self->{Configure}{HistList}},
 				-deleteitemsok => $self->{Configure}{-HistDeleteOk}||0,
-				-browsecmd => sub { print STDERR "-ARGS=".join('|',@_)."=\n"; $self->{'OK'}->invoke  unless (!$self->{Configure}{-QuickSelect} or $_[2] =~ /space$/); },
+				-browsecmd => sub {
+					$self->{'OK'}->invoke  unless (!$self->{Configure}{-QuickSelect} or $_[2] =~ /space$/);
+					$self->{'FileEntry'}->delete('0.0','end');
+					$self->{'FileEntry'}->insert('end', $self->{Configure}{$LabelVar});
+					$self->{'FileEntry'}->focus;
+					if ($self->{Configure}{-HistUsePath} == 1 || ($self->{Configure}{-HistUsePath} && $self->{"histToggleVal"}))
+					{
+						$self->{Configure}{-Path} = $self->{Configure}{$LabelVar};
+						$self->{Configure}{-Path} =~ s#\/[^\/]+$##  unless (-d $self->{Configure}{-Path});
+						$driveletter = $1  if ($^O =~ /Win/i && $self->{Configure}{-Path} =~ s/^(\w\:)//);
+						&RescanFiles($self);
+					}
+					$self->{Configure}{$LabelVar} = '';
+				},
 				-listrelief => 'flat')
 			->pack(@rightPack, @expand, @xfill);
+	
 	$eFrame->packForget  unless ($self->{Configure}{-HistFile});
+#DOESN'T WORK?!	$self->{"$entry"}->bind('<Shift-ButtonRelease>', sub {
+#			$self->{'FileEntry'}->delete('0.0','end');
+#			$self->{'FileEntry'}->insert('end',\$self->{Configure}{$LabelVar});
+#			Tk->break;
+#	});
+
 	return $eFrame;
 }
 
@@ -1084,7 +1145,11 @@ sub BuildFAV
 				-state => 'readonly',
 				-variable => \$self->{Configure}{$LabelVar},
 				-choices => \%{$self->{Configure}{PathList}},
-				-browsecmd => sub { print STDERR "-PATHS=".join('|',@_)."=\n"; $self->{Configure}{-Path} = $self->{$entry}->dereference($self->{Configure}{$LabelVar}); &RescanFiles($self)  unless (!$self->{Configure}{-QuickSelect} or $_[2] =~ /space$/); },
+				-browsecmd => sub {
+					$self->{Configure}{-Path} = $self->{$entry}->dereference($self->{Configure}{$LabelVar});
+					&RescanFiles($self)  unless (!$self->{Configure}{-QuickSelect} or $_[2] =~ /space$/);
+					$self->{'FileEntry'}->focus;
+				},
 				-listrelief => 'flat')
 			->pack(@rightPack, @expand, @xfill);
 	$eFrame->packForget  unless ($self->{Configure}{-PathFile} && -r $self->{Configure}{-PathFile});
@@ -1257,6 +1322,7 @@ sub RescanFiles
 
 	unless (($path =~ /^~/) || -d $path)
 	{
+		print STDERR "-JFileDialog: =$path= is NOT a directory\n";
 		carp "$path is NOT a directory\n";
 		return 0;
 	}
@@ -1380,6 +1446,14 @@ sub add2Hist
 			}
 		}
 		close TEMP;
+		if ($self->{Configure}{-HistUsePath} == 1 || ($self->{Configure}{-HistUsePath} && $self->{"histToggleVal"}))
+		{
+#$fname = 'v:/dev/.propval/html/x.pl';
+			$self->{Configure}{-Path} = $fname;
+			$self->{Configure}{-Path} =~ s#\/[^\/]+$##  unless (-d $self->{Configure}{-Path});
+			$driveletter = $1  if ($^O =~ /Win/i && $self->{Configure}{-Path} =~ s/^(\w\:)//);
+#"=".$fname."=".$driveletter."=".$xxx."="
+		}
 	}
 }
 

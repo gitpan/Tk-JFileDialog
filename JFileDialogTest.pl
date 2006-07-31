@@ -73,6 +73,7 @@ sub getfile
 			-Title=> $mytitle,
 			-Path => $path,
 			-History => 12,
+			-HistDeleteOk => 1,
 			-HistFile => "./FileHistory.txt",
 			-PathFile => "./Bookmarks.txt",
 			-Create => 1);

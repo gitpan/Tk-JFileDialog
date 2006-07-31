@@ -170,7 +170,7 @@ position the label above the widget, use "-labelPack => [-side => 'top']".
 package Tk::JBrowseEntry;
 
 use vars qw($VERSION);
-$VERSION = '4.63';
+$VERSION = '4.64';
 
 use Tk;
 use Carp;
@@ -859,6 +859,7 @@ sub SetBindings
 		$w->LbCopySelection(0,'listbox.space');
 		$e->selectionRange(0,'end')  unless ($w->{-noselecttext} || !$e->index('end'));
 		$e->icursor('end');
+		$w->{'savefocus'} = $w->focusCurrent;  #ADDED 20060621 TO ALLOW JFILEDIALOG TO SET FOCUS TO ANOTHER WIDGET WHEN USER SELECTS VIA SPACEBAR.
 		Tk->break;
 	}
 	);
@@ -1037,7 +1038,6 @@ sub PopupChoices
 		#my $bd = $c->cget(-bd) + $c->cget(-highlightthickness);  #CHGD. TO NEXT 20050120.
 		my $bd = $c->cget(-bd);
 		my ($unitpixels, $ht, $x1, $ee, $width, $x2);
-#print "-os=$^O=\n";
 		if ($^O =~ /Win/i)
 		{
 			$y1 -= 3 - ($w->{-borderwidth} || 2);
@@ -1060,7 +1060,6 @@ sub PopupChoices
 			$unitpixels = $e->height - (2*$w->cget(-highlightthickness));
 			$unitpixels += 1;
 			$ht = ($wheight * $unitpixels) + (2 * $bd) + 6;
-#print "-ht=$ht= wheight=$wheight= up=$unitpixels= bd=$bd= eht=".$e->height."= ht=".$w->cget(-highlightthickness)."= \n";
 			$ee = $w->Subwidget("frame");
 			$x1 = $ee->rootx;
 			$x2 = $a->rootx + $a->width;
@@ -1542,7 +1541,6 @@ sub _set_edit_state
 				-takefocus => (1 & $w->{takefocus}), 
 				-highlightcolor => $framehlcolor);
 	}
-#print "-???- tfg=$w->{-textforeground}=\n";
 	$entry->configure( -background => $w->{-textbackground})  if ($w->{-textbackground});
 	$entry->configure( -foreground => $w->{-textforeground})  if ($w->{-textforeground});
 	unless ($w->Subwidget("slistbox")->size > 0)
