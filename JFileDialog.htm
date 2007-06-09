@@ -51,6 +51,7 @@
 		<li><a href="#geometry">-Geometry</a></li>
 		<li><a href="#selhook">-SelHook</a></li>
 		<li><a href="#strings"><em>Strings</em></a></li>
+		<li><a href="#selectmode">-SelectMode</a></li>
 		<li><a href="#labels_and_captions"><em>Labels and Captions</em></a></li>
 		<li><a href="#button_text"><em>Button Text</em></a></li>
 		<li><a href="#error_dialog_switches"><em>Error Dialog Switches</em></a></li>
@@ -251,7 +252,7 @@ history file.</p>
 <p>
 </p>
 <h2><a name="histusepathbutton">-HistUsePathButton</a></h2>
-<p>If set, the path the toggle button for -HistUsePath is defaulted to set, otherwise default is off.</p>
+<p>If set, the path is set to that of the last file selected from the history.</p>
 <p>
 </p>
 <h2><a name="histfile">-HistFile</a></h2>
@@ -262,12 +263,8 @@ combo-box permitting user selection.</p>
 <p>
 </p>
 <h2><a name="pathfile">-PathFile</a></h2>
-<p>Specifies a file containing a list of "favorite paths" bookmarks to show in a 
-dropdown list allowing quick-changes in directories.  This file sould be built 
-as a simple ASCII text file containing each full path to be bookmarked on a 
-separate line.  The path may be optionally followed by a semicolon and a short 
-text description to appear in the dropdown list in leau of the path itself.
-Windows paths should include a drive-letter and a colon.</p>
+<p>Specifies a file containing a list of ``favorite paths'' bookmarks to show in a 
+dropdown list allowing quick-changes in directories.</p>
 <p>
 </p>
 <h2><a name="horiz">-Horiz</a></h2>
@@ -321,7 +318,18 @@ routine replaces any existing SelHook routine. Configuring the SelHook routine w
 <p>The following two switches may be used to set default variables, and to get final
 values after the Show method has returned (but has not been explicitly destroyed
 by the caller)</p>
-<p><strong>-File</strong>  The file selected, or the default file. The default is ''.</p>
+<p>
+</p>
+<h2><a name="selectmode">-SelectMode</a></h2>
+<pre>
+
+Sets the selectmode of the File Dialog.  If not configured it will be defaulted
+to 'single'.  If set to 'multiple', then the user may select more than one file 
+and a comma-delimited list of all selected files is returned.  Otherwise, only 
+a single file may be selected.</pre>
+<pre>
+
+B&lt;-File&gt;  The file selected, or the default file. The default is ''.</pre>
 <p><strong>-Path</strong>  The path of the selected file, or the initial path. The default is $ENV{'HOME'}.</p>
 <p>
 </p>
@@ -342,6 +350,9 @@ changed.</p>
 <p><strong>-OKButtonLabel</strong>  The text for the OK button. The default is 'OK'.</p>
 <p><strong>-RescanButtonLabel</strong>  The text for the Rescan button. The default is 'Refresh'.</p>
 <p><strong>-CancelButtonLabel</strong>  The text for the Cancel button. The default is 'Cancel'.</p>
+<p><strong>-HomeButtonLabel</strong>  The text for the Home directory button. The default is 'Home'.</p>
+<p><strong>-CWDButtonLabel</strong>  The text for the Current Working Directory button. 
+The default is 'C~WD'.</p>
 <p>
 </p>
 <h2><a name="error_dialog_switches"><em>Error Dialog Switches</em></a></h2>

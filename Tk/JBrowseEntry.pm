@@ -170,7 +170,7 @@ position the label above the widget, use "-labelPack => [-side => 'top']".
 package Tk::JBrowseEntry;
 
 use vars qw($VERSION);
-$VERSION = '4.64';
+$VERSION = '4.65';
 
 use Tk;
 use Carp;
@@ -491,6 +491,28 @@ sub SetBindings
 		}
 	};
 
+	local *rightFn = sub
+	{
+		Tk->break  if ($e->index('insert') < $e->index('end')
+				|| $w->{-altbinding} =~ /Right=NoSearch/i);
+		my ($state) = $w->cget( "-state" );
+		return  if ($state eq 'textonly' || $state eq 'disabled');
+		my $srchPattern = $w->cget( "-textvariable" );
+		&LbFindSelection($w, $srchPattern); 
+		my $l = $w->Subwidget("slistbox")->Subwidget("listbox");
+		my (@listsels) = $l->get('0','end');
+		my $index = $w->LbIndex;
+			if (&LbFindSelection($w) == 1 && &LbFindSelection($w, $srchPattern))
+			{
+				$index += 1;
+				$index = 0  if ($index > $#listsels);
+			}
+		my $var_ref = $w->cget( "-textvariable" );
+		$$var_ref = $listsels[$index];
+		$e->icursor('end');
+		$e->selectionRange(0,'end')  unless ($w->{-noselecttext} || !$e->index('end'));
+	};
+
 	local *downFn = sub   #HANDLES DOWN-ARROW PRESSED IN ENTRY AREA.
 	{
 		my $altbinding = $w->{-altbinding};
@@ -765,9 +787,11 @@ sub SetBindings
 	$f->bind('<Escape>' => \&escapeFn);
 
 	$e->bind("<Left>", sub {Tk->break;});
-	$e->bind("<Right>", sub {Tk->break;});
+	#$e->bind("<Right>", sub {Tk->break;});
+	$e->bind("<Right>", \&rightFn);
 	$f->bind("<Left>", sub {Tk->break;});
-	$f->bind("<Right>", sub {Tk->break;});
+	#$f->bind("<Right>", sub {Tk->break;});
+	$f->bind("<Right>", \&rightFn);
 
 	$e->bind("<Tab>", sub
 	{

@@ -1,14 +1,14 @@
 ##################################################
 ##################################################
 ##                                              ##
-##   JFileDialog v. 1.32 - a reusable Tk-widget ##
-##      (c) 1996-2006 by Jim Turner             ##
+##   JFileDialog v. 1.34 - a reusable Tk-widget ##
+##      (c) 1996-2007 by Jim Turner             ##
 ##      --Derived 12/11/96 by Jim W. Turner--   ##
 ##      --from FileDialog                       ##
 ##                                              ##
 ##   by:  Brent B. Powers                       ##
 ##   Merrill Lynch                              ##
-##   powers@swaps-comm.ml.com		                 ##
+##   powers@swaps-comm.ml.com                   ##
 ##                                              ##
 ##################################################
 ##################################################
@@ -181,7 +181,7 @@ If set, the path is set to that of the last file selected from the history.
 
 =head2 -HistUsePathButton
 
-If set, the path the toggle button for -HistUsePath is defaulted to set, otherwise default is off.
+If set, the path is set to that of the last file selected from the history.
 
 =head2 -HistFile
 
@@ -289,6 +289,11 @@ B<-RescanButtonLabel>  The text for the Rescan button. The default is 'Refresh'.
 
 B<-CancelButtonLabel>  The text for the Cancel button. The default is 'Cancel'.
 
+B<-HomeButtonLabel>  The text for the Home directory button. The default is 'Home'.
+
+B<-CWDButtonLabel>  The text for the Current Working Directory button. 
+The default is 'C~WD'.
+
 =head2 I<Error Dialog Switches>
 
 If the Create switch is set to 0, and the user specifies a file that does not exist,
@@ -324,7 +329,7 @@ This code may be distributed under the same conditions as Perl itself.
 package Tk::JFileDialog;
 
 use vars qw($VERSION);
-$VERSION = '1.32';
+$VERSION = '1.34';
 
 require 5.002;
 use Tk;
@@ -433,6 +438,8 @@ sub Populate
 			-OKButtonLabel	=> ['METHOD', undef, undef, '~OK'],
 			-RescanButtonLabel	=> ['METHOD', undef, undef, '~Refresh'],
 			-CancelButtonLabel	=> ['METHOD', undef, undef, '~Cancel'],
+			-HomeButtonLabel	=> ['METHOD', undef, undef, '~Home'],
+			-CWDButtonLabel	=> ['METHOD', undef, undef, 'C~WD'],
 			-SelHook		=> ['PASSIVE', undef, undef, undef],
 			-SelectMode => ['PASSIVE', undef, undef, 'single'],   #ADDED 20050416 TO PERMIT MULTIFILE SELECTIONS, THANKS TO Paul Falbe FOR THIS PATCH!
 			-ShowAll		=> ['PASSIVE', undef, undef, 0],
@@ -463,6 +470,14 @@ sub RescanButtonLabel
 sub CancelButtonLabel
 {
 	&SetButton('Can',@_);
+}
+sub HomeButtonLabel
+{
+	&SetButton('Home',@_);
+}
+sub CWDButtonLabel
+{
+	&SetButton('Current',@_);
 }
 
 sub SetButton
@@ -1242,8 +1257,7 @@ sub BuildFDWindow
 	{
 		$self->{'Retval'} = -1;
 	}
-	)
-			->pack(-padx => '2m', -pady => '2m', @leftPack, @expand, @xfill);
+	)->pack(-padx => '2m', -pady => '2m', @leftPack, @expand, @xfill);
 	
 	$self->{'Home'} = $butFrame->Button(
 		-text => 'Home', 
@@ -1257,8 +1271,7 @@ sub BuildFDWindow
 			$self->{Configure}{-Path} ||= &cwd() || &getcwd();
 			\&RescanFiles($self);
 		}
-	)
-			->pack(-padx => '2m', -pady => '2m', @leftPack, @expand, @xfill);
+	)->pack(-padx => '2m', -pady => '2m', @leftPack, @expand, @xfill);
 	
 	$self->{'Current'} = $butFrame->Button(
 		-text => 'CWD',
@@ -1269,8 +1282,29 @@ sub BuildFDWindow
 			$self->{Configure}{-Path} =~ s#\\#\/#g;
 			\&RescanFiles($self);
 		}
-	)
-			->pack(-padx => '2m', -pady => '2m', @leftPack, @expand, @xfill);
+	)->pack(-padx => '2m', -pady => '2m', @leftPack, @expand, @xfill);
+	
+	if (-e "$ENV{HOME}/.cdout")
+	{
+		my $cdir0 = &cwd() || &getcwd();
+		my $cdir = $cdir0;
+		open (CD, "$ENV{HOME}/.cdout") || last;
+		$cdir = <CD>;
+		chomp($cdir);
+		close CD;
+		if ($cdir ne $cdir0) {
+			$self->{'CDOUT'} = $butFrame->Button(
+				-text => 'Cdir',
+				-underline => 1,
+				-command => sub
+				{
+					$self->{Configure}{-Path} = $cdir;
+					$self->{Configure}{-Path} =~ s#\\#\/#g;
+					\&RescanFiles($self);
+				}
+			)->pack(-padx => '2m', -pady => '2m', @leftPack, @expand, @xfill);
+		}
+	}
 }
 
 sub RescanFiles

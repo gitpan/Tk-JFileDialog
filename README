@@ -39,12 +39,7 @@ SYNOPSIS
      my($fname);
 
      my($LoadDialog) = $main->JFileDialog(-Title =>'This is my title',
-			-Create => 0,
-			-History => 12,
-			-HistDeleteOk => 1,
-			-HistFile => "./FileHistory.txt",
-			-PathFile => "./Bookmarks.txt",
-	);
+                                        -Create => 0);
 
      $LoadDialog->configure(-FPat => '*pl',
                            -ShowAll => 'NO');
@@ -142,8 +137,16 @@ CONFIGURATION
         in the history list. The default is 0 (keep all).
 
   -HistDeleteOk
-        If set, allows user to delete items from the history dropdown list and 
-        thus the history file.
+        If set, allows user to delete items from the history dropdown list
+        and thus the history file.
+
+  -HistUsePath
+        If set, the path is set to that of the last file selected from the
+        history.
+
+  -HistUsePathButton
+        If set, the path is set to that of the last file selected from the
+        history.
 
   -HistFile
         Enables the keeping of a history of the previous files / directories
@@ -152,13 +155,8 @@ CONFIGURATION
         displayed in a "JBrowseEntry" combo-box permitting user selection.
 
   -PathFile
-        Specifies a file containing a list of "favorite paths" bookmarks to 
-        show in a dropdown list allowing quick-changes in directories.  This 
-        file sould be built as a simple ASCII text file containing each full 
-        path to be bookmarked on a separate line.  The path may be optionally 
-        followed by a semicolon and a short text description to appear in the 
-        dropdown list in leau of the path itself.  Windows paths should 
-        include a drive-letter and a colon.
+        Specifies a file containing a list of "favorite paths" bookmarks to
+        show in a dropdown list allowing quick-changes in directories.
 
   -Horiz
         True sets the File List box to be to the right of the Directory List
@@ -213,6 +211,12 @@ CONFIGURATION
         to get final values after the Show method has returned (but has not
         been explicitly destroyed by the caller)
 
+  -SelectMode
+        Sets the selectmode of the File Dialog. If not configured it will be
+        defaulted to 'single'. If set to 'multiple', then the user may
+        select more than one file and a comma-delimited list of all selected
+        files is returned. Otherwise, only a single file may be selected.
+
         -File The file selected, or the default file. The default is ''.
 
         -Path The path of the selected file, or the initial path. The
@@ -253,6 +257,12 @@ CONFIGURATION
 
         -CancelButtonLabel The text for the Cancel button. The default is
         'Cancel'.
+
+        -HomeButtonLabel The text for the Home directory button. The default
+        is 'Home'.
+
+        -CWDButtonLabel The text for the Current Working Directory button.
+        The default is 'C~WD'.
 
   *Error Dialog Switches*
         If the Create switch is set to 0, and the user specifies a file that
