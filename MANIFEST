@@ -6,6 +6,5 @@ test.pl
 Tk::JFileDialog.3
 JFileDialog.htm
 test.pl
-Tk/JFileDialog.pm
-Tk/JBrowseEntry.pm
+lib/Tk/JFileDialog.pm
 META.yml                                 Module meta-data (added by MakeMaker)

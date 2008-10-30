@@ -79,7 +79,7 @@ sub getfile
 			-Create => 1);
 
 	$myfile = $fileDialog->Show();
-	if ($myfile =~ /\S/)
+	if ($myfile =~ /\S/o)
 	{
 		$topLabel->configure(-text => "file: $myfile");
 	}
@@ -97,7 +97,7 @@ sub getfiles
 			-Create => 1);
 
 	$myfile = $fileDialog->Show();
-	if ($myfile =~ /\S/)
+	if ($myfile =~ /\S/o)
 	{
 		$topLabel->configure(-text => "file: $myfile");
 	}

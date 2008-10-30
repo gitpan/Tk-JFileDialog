@@ -329,7 +329,7 @@ This code may be distributed under the same conditions as Perl itself.
 package Tk::JFileDialog;
 
 use vars qw($VERSION);
-$VERSION = '1.34';
+$VERSION = '1.4';
 
 require 5.002;
 use Tk;
@@ -453,6 +453,7 @@ sub Populate
 			-HistUsePathButton => ['PASSIVE', undef, undef, undef],
 			-PathFile => ['PASSIVE', undef, undef, undef],
 			-QuickSelect => ['PASSIVE', undef, undef, 1],
+			-DestroyOnHide => ['PASSIVE', undef, undef, 0],
 			-EDlgText		=> ['PASSIVE', undef, undef,
 	"You must specify an existing file.\n"
 			. "(\$filename not found)"]);
@@ -579,6 +580,8 @@ sub Show
 {
 	my ($self) = shift;
 	
+    my $old_focus = $self->focusSave;
+    my $old_grab = $self->grabSave;
 	$self->configure(@_);
 	
 	## Clean up flag variables
@@ -684,9 +687,10 @@ sub Show
 	}
 	
 	$self->grab('release') if (defined($self->grab('current')));
-	
-	$self->withdraw;
-	
+    &$old_focus;
+    &$old_grab;
+#	$self->parent->focus();
+	($self->{Configure}{-DestroyOnHide} == 1) ? $self->destroy : $self->withdraw;
 	return $self->{'RetFile'};
 }
 
@@ -1138,8 +1142,47 @@ sub BuildFAV
 	$eFrame->{'Label'} = $eFrame->Label->pack(@leftPack); # !!!
 
 	${$self->{Configure}{PathList}}{''} = '';
-	my ($l, $r);
-	if ($self->{Configure}{-PathFile} && open(TEMP, $self->{Configure}{-PathFile}))
+	my ($l, $r, $s, $dir);
+	if ($Win32 && -d $self->{Configure}{-PathFile})   #ADDED 20081029 TO ALLOW USAGE OF WINDOWS' "FAVORITES" (v1.4)
+	{
+		(my $pathDir = $self->{Configure}{-PathFile}) =~ s#\\#\/#go;
+		chop($pathDir)  if ($pathDir =~ m#\/$#);
+		my ($f, %favHash);
+		if (opendir (FAVDIR, $pathDir))
+		{
+			while (defined($f = readdir(FAVDIR)))
+			{
+				if ($f =~ /\.lnk$/o)
+				{
+#					print "-file=$f=\n";
+					if (open (LNKFILE, "<${pathDir}/$f"))
+					{
+						while (defined($s = <LNKFILE>))
+						{
+							if ($s =~ /(\w\:\\\w[\w\\\_\-\. ]+)/o)
+							{
+								($dir = $1) =~ s#\\#\/#gso;
+								$dir =~ s/\s+#//gso;
+								if (-d $dir)
+								{
+									$f =~ s/\.lnk//io;
+									$favHash{$f} = $dir;
+									last;
+								}
+							}
+						}
+						close LNKFILE;
+					}
+				}
+			}
+			closedir FAVDIR;
+			foreach $f (sort keys %favHash)
+			{
+				${$self->{Configure}{PathList}}{$favHash{$f}} = $f;
+			}
+		}
+	}
+	elsif ($self->{Configure}{-PathFile} && open(TEMP, $self->{Configure}{-PathFile}))
 	{
 		while (<TEMP>)
 		{

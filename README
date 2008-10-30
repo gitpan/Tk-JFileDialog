@@ -157,6 +157,8 @@ CONFIGURATION
   -PathFile
         Specifies a file containing a list of "favorite paths" bookmarks to
         show in a dropdown list allowing quick-changes in directories.
+        As of v1.4, this can be a directory on Windows systems which can 
+        contain ".lnk" files containing "Favorite" paths.
 
   -Horiz
         True sets the File List box to be to the right of the Directory List
